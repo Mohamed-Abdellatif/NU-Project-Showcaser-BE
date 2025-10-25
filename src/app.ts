@@ -1,15 +1,19 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-require('dotenv').config();
+import express, { Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import dotenv from 'dotenv';
+import projectRoutes from './routes/project.routes';
+import userRoutes from './routes/userRoutes';
+
+dotenv.config();
 
 const app = express();
 
 // Configure allowed origins based on environment
-const allowedOrigins = process.env.NODE_ENV === 'production'
+const allowedOrigins = (process.env.NODE_ENV === 'production'
   ? [process.env.PRODUCTION_FRONTEND_URL]
-  : process.env.FRONTEND_URLS?.split(',') || ['http://localhost:5173'];
+  : process.env.FRONTEND_URLS?.split(',') || ['http://localhost:5173']).filter((origin): origin is string => !!origin);
 
 // Middleware
 // Configure Helmet with frontend-friendly settings
@@ -38,16 +42,14 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Import routes
-const projectRoutes = require('./routes/project.routes');
-
 // Use routes
-app.use('/api/projects', projectRoutes);
+app.use('/project', projectRoutes);
+app.use('/user', userRoutes);
 
 // Error handling middleware
-app.use((err, req, res, next) => {
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
   res.status(500).json({ message: 'Something went wrong!' });
 });
 
-module.exports = app;
+export default app;
