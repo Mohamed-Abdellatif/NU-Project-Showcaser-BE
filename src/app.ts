@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import projectRoutes from './routes/project.routes';
+import userRoutes from './routes/userRoute';
 
 dotenv.config();
 
@@ -43,6 +44,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Use routes
 app.use('/project', projectRoutes);
+app.use('/user', userRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

@@ -14,6 +14,11 @@ const projectSchema = new Schema<IProject>({
     required: true,
     trim: true
   },
+  description: {
+    type: String,
+    required: true,
+    trim: true
+  },
   technologies: [{
     type: String,
     trim: true
