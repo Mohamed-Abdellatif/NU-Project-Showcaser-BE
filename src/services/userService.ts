@@ -35,7 +35,12 @@ export const login = async ({email,password}:LoginParams) => {
         return {data:"Incorrect email or password!",statusCode:400}
     }
 
-    const passwordMatch = await bcrypt.compare(password,findUser.password);
+    // If the account was created via Microsoft SSO, it may not have a password
+    if (!findUser.password) {
+        return {data:"This account uses Microsoft login. Please sign in with Microsoft.",statusCode:400}
+    }
+
+    const passwordMatch = await bcrypt.compare(password, findUser.password as string);
     if(passwordMatch){
         return {data:generateJWT({email,firstName:findUser.firstName,lastName:findUser.lastName}),statusCode:200};
     }
