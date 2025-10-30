@@ -5,6 +5,11 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import projectRoutes from './routes/project.routes';
 import userRoutes from './routes/userRoute';
+import session from 'express-session';
+import authRoutes from './routes/authRoutes';
+import passport, { configurePassport } from './config/passport';
+import cookieParser from 'cookie-parser';
+import { jwtCookieAuth } from './middlewares/jwtCookieAuth';
 
 dotenv.config();
 
@@ -35,16 +40,38 @@ app.use(helmet({
 app.use(cors({
   origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+// Session and Passport
+const sessionSecret = process.env.SESSION_SECRET || 'keyboard cat';
+app.use(session({
+  secret: sessionSecret,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  }
+}));
+
+configurePassport();
+app.use(passport.initialize());
+app.use(passport.session());
+// Attach user from JWT cookie (if present)
+app.use(jwtCookieAuth);
 
 // Use routes
 app.use('/project', projectRoutes);
 app.use('/user', userRoutes);
+app.use('/auth', authRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
