@@ -5,6 +5,7 @@ import * as projectController from '../controllers/projectController';
 const router = Router();
 
 router.get('/search', projectController.searchProjects);
+router.get('/:id', projectController.getProjectById);
 router.get('/', projectController.getAllProjects);
 router.post('/', projectController.createProject);
 router.put('/:id', projectController.updateProject);

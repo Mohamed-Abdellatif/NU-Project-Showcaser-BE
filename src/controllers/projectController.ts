@@ -181,3 +181,16 @@ export const searchProjects = async (
     next(error);
   }
 };
+
+export const getProjectById = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const project = await projectService.getProjectById(req.params.id);
+    res.json(project);
+  } catch (error) {
+    next(error);
+  }
+};
