@@ -40,3 +40,39 @@ export const getProjectByTeamMember = async (teamMember: string): Promise<IProje
 export const getProjectByTeamLeader = async (teamLeader: string): Promise<IProject[]> => {
   return await Project.find({ teamLeader: teamLeader });
 };
+
+export type ProjectSearchCriteria = {
+  title?: string;
+  major?: string;
+  supervisor?: string;
+  teamMember?: string;
+  teamLeader?: string;
+};
+
+export const searchProjects = async (
+  criteria: ProjectSearchCriteria
+): Promise<IProject[]> => {
+  const orConditions: Record<string, unknown>[] = [];
+
+  if (criteria.title) {
+    orConditions.push({ title: criteria.title });
+  }
+  if (criteria.major) {
+    orConditions.push({ major: criteria.major });
+  }
+  if (criteria.supervisor) {
+    orConditions.push({ supervisor: criteria.supervisor });
+  }
+  if (criteria.teamMember) {
+    orConditions.push({ teamMembers: criteria.teamMember });
+  }
+  if (criteria.teamLeader) {
+    orConditions.push({ teamLeader: criteria.teamLeader });
+  }
+
+  if (orConditions.length === 0) {
+    return await Project.find({});
+  }
+
+  return await Project.find({ $or: orConditions });
+};
