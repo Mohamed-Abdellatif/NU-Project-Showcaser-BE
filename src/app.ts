@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import projectRoutes from './routes/project.routes';
+import projectRoutes from './routes/projectRoutes';
 import userRoutes from './routes/userRoute';
 import session from 'express-session';
 import authRoutes from './routes/authRoutes';
