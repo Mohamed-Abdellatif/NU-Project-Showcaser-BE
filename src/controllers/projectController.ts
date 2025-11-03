@@ -128,12 +128,8 @@ export const getProjectByTeamLeader = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const project = await projectService.getProjectByTeamLeader(req.params.teamLeader);
-    if (!project) {
-      res.status(404).json({ message: 'Project not found' });
-      return;
-    }
-    res.json(project);
+    const projects = await projectService.getProjectByTeamLeader(req.params.teamLeader);
+    res.json(projects);
   } catch (error) {
     next(error);
   }
