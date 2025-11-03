@@ -85,12 +85,8 @@ export const getProjectByMajor = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const project = await projectService.getProjectByMajor(req.params.major);
-    if (!project) {
-      res.status(404).json({ message: 'Project not found' });
-      return;
-    }
-    res.json(project);
+    const projects = await projectService.getProjectByMajor(req.params.major);
+    res.json(projects); // Return empty array if no matches
   } catch (error) {
     next(error);
   }
