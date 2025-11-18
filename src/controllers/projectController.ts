@@ -194,3 +194,76 @@ export const getProjectById = async (
     next(error);
   }
 };
+
+export const getFeaturedProjects = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const projects = await projectService.getFeaturedProjects();
+    res.json(projects);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createMultipleProjects = async (
+  req: Request<{}, {}, IProject[]>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!Array.isArray(req.body) || req.body.length === 0) {
+      res.status(400).json({ message: "Request body must be a non-empty array of projects" });
+      return;
+    }
+    const projects = await projectService.createMultipleProjects(req.body);
+    res.status(201).json(projects);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getProjects = async (
+  req: Request<{}, {}, {}, { 
+    page?: string; 
+    limit?: string;
+    title?: string;
+    major?: string;
+    supervisor?: string;
+    teamMember?: string;
+    teamLeader?: string;
+  }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const page = parseInt(req.query.page || '1', 10);
+    const limit = parseInt(req.query.limit || '10', 10);
+    const { title, major, supervisor, teamMember, teamLeader } = req.query;
+
+    if (page < 1) {
+      res.status(400).json({ message: "Page must be greater than 0" });
+      return;
+    }
+
+    if (limit < 1 || limit > 100) {
+      res.status(400).json({ message: "Limit must be between 1 and 100" });
+      return;
+    }
+
+    const filters = {
+      ...(title && { title }),
+      ...(major && { major }),
+      ...(supervisor && { supervisor }),
+      ...(teamMember && { teamMember }),
+      ...(teamLeader && { teamLeader }),
+    };
+
+    const result = await projectService.getProjects(page, limit, filters);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
