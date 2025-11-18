@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { IProject } from "../models/projectModel";
 import * as projectService from "../services/projectService";
+import * as userService from "../services/userService";
+import { findDbUserFromSessionUser } from "../services/authService";
 
 export const getAllProjects = async (
   req: Request,
@@ -263,6 +265,58 @@ export const getProjects = async (
 
     const result = await projectService.getProjects(page, limit, filters);
     res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateProjectStars = async (
+  req: Request<{ id: string }, {}, { action?: 'add' | 'remove' }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { action } = req.body;
+
+    if (!action || (action !== 'add' && action !== 'remove')) {
+      res.status(400).json({ message: "Action must be either 'add' or 'remove'" });
+      return;
+    }
+
+    // Get the authenticated user
+    const sessionUser = (req as any).user as
+      | { sub?: string; id?: string; email?: string }
+      | undefined;
+    
+    if (!sessionUser) {
+      res.status(401).json({ message: "User not found in session" });
+      return;
+    }
+
+    // Find the user in the database
+    const dbUser = await findDbUserFromSessionUser(sessionUser);
+    if (!dbUser) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    // Update project stars
+    const project = await projectService.updateProjectStars(id, action);
+    if (!project) {
+      res.status(404).json({ message: "Project not found" });
+      return;
+    }
+
+    // Update user's starred projects
+    const userId = (dbUser as any)._id?.toString() || (dbUser as any).id?.toString();
+    if (!userId) {
+      res.status(500).json({ message: "Unable to get user ID" });
+      return;
+    }
+    await userService.updateUserStarredProjects(userId, id, action);
+
+    res.json(project);
   } catch (error) {
     next(error);
   }

@@ -1,4 +1,4 @@
-import userModel from "../models/userModel";
+import userModel, { IUser } from "../models/userModel";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken'
 
@@ -51,3 +51,28 @@ export const login = async ({email,password}:LoginParams) => {
 const generateJWT=(data:any)=>{
 return jwt.sign(data,process.env.JWT_SECRET as string)
 }
+
+export const updateUserStarredProjects = async (
+  userId: string,
+  projectId: string,
+  action: 'add' | 'remove'
+): Promise<IUser | null> => {
+  const user = await userModel.findById(userId);
+  if (!user) {
+    return null;
+  }
+
+  if (action === 'add') {
+    // Add project ID if not already in the array
+    if (!user.starredProjects.includes(projectId)) {
+      user.starredProjects.push(projectId);
+      await user.save();
+    }
+  } else {
+    // Remove project ID from the array
+    user.starredProjects = user.starredProjects.filter(id => id !== projectId);
+    await user.save();
+  }
+
+  return user;
+};

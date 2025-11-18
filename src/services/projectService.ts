@@ -154,3 +154,24 @@ export const getProjects = async (
     }
   };
 };
+
+export const updateProjectStars = async (
+  id: string,
+  action: 'add' | 'remove'
+): Promise<IProject | null> => {
+  const project = await Project.findById(id);
+  if (!project) {
+    return null;
+  }
+
+  const currentStars = project.stars || 0;
+  const newStars = action === 'add' 
+    ? currentStars + 1 
+    : Math.max(0, currentStars - 1);
+
+  return await Project.findByIdAndUpdate(
+    id,
+    { stars: newStars },
+    { new: true }
+  );
+};

@@ -7,6 +7,7 @@ lastName:string;
 email:string;
 password?:string;
 msId?:string;
+starredProjects:string[];
 }
 
 
@@ -16,6 +17,7 @@ const userSchema = new Schema<IUser>({
     email:{type:String,required:true, unique:true},
     password:{type:String,required:false},
     msId:{type:String,required:false, unique:true, sparse:true},
+    starredProjects:{type:[String],required:false, default: []},
 })
 
 
