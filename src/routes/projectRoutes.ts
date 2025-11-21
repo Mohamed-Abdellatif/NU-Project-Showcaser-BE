@@ -15,4 +15,5 @@ router.post('/multiple', projectController.createMultipleProjects);
 router.put('/:id', projectController.updateProject);
 router.put('/star/:id', ensureAuthenticated, projectController.updateProjectStars);
 router.delete('/:id', projectController.deleteProject);
+
 export default router;
