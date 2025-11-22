@@ -175,3 +175,10 @@ export const updateProjectStars = async (
     { new: true }
   );
 };
+
+export const getStarredProjects = async (projectIds: string[]): Promise<IProject[]> => {
+  if (!projectIds || projectIds.length === 0) {
+    return [];
+  }
+  return await Project.find({ _id: { $in: projectIds } });
+};

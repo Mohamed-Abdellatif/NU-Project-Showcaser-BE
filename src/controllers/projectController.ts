@@ -321,3 +321,42 @@ export const updateProjectStars = async (
     next(error);
   }
 };
+
+export const getStarredProjects = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    // Get the authenticated user
+    const sessionUser = (req as any).user as
+      | { sub?: string; id?: string; email?: string }
+      | undefined;
+    
+    if (!sessionUser) {
+      res.status(401).json({ message: "User not found in session" });
+      return;
+    }
+
+    // Find the user in the database
+    const dbUser = await findDbUserFromSessionUser(sessionUser);
+    if (!dbUser) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    // Get starred project IDs from user
+    const starredProjectIds = (dbUser as any).starredProjects || [];
+    
+    if (starredProjectIds.length === 0) {
+      res.json([]);
+      return;
+    }
+
+    // Fetch the starred projects
+    const projects = await projectService.getStarredProjects(starredProjectIds);
+    res.json(projects);
+  } catch (error) {
+    next(error);
+  }
+};

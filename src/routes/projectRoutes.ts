@@ -8,6 +8,7 @@ const router = Router();
 router.get('/all', projectController.getAllProjects);
 router.get('/search', projectController.searchProjects);
 router.get('/featured', projectController.getFeaturedProjects);
+router.get('/starred', ensureAuthenticated, projectController.getStarredProjects);
 router.get('/:id', projectController.getProjectById);
 router.get('/', projectController.getProjects);
 router.post('/', ensureAuthenticated, projectController.createProject);
