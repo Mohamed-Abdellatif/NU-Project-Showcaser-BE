@@ -300,7 +300,14 @@ export const updateProjectStars = async (
       res.status(404).json({ message: "User not found" });
       return;
     }
-
+    if(!(dbUser as any).starredProjects.includes(id) && action === 'remove') {
+      res.status(400).json({ message: "Project not starred" });
+      return;
+    }
+    if((dbUser as any).starredProjects.includes(id) && action === 'add') {
+      res.status(400).json({ message: "Project already starred" });
+      return;
+    }
     // Update project stars
     const project = await projectService.updateProjectStars(id, action);
     if (!project) {
