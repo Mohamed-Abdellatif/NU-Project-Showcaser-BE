@@ -8,6 +8,7 @@ import userRoutes from './routes/userRoute';
 import commentsRoutes from './routes/commentsRoutes';
 import session from 'express-session';
 import authRoutes from './routes/authRoutes';
+import uploadRoutes from './routes/uploadRoutes';
 import passport, { configurePassport } from './config/passport';
 import cookieParser from 'cookie-parser';
 import { jwtCookieAuth } from './middlewares/jwtCookieAuth';
@@ -74,6 +75,7 @@ app.use('/project', projectRoutes);
 app.use('/user', userRoutes);
 app.use('/comments', commentsRoutes);
 app.use('/auth', authRoutes);
+app.use('/upload', uploadRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

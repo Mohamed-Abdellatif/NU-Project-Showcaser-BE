@@ -10,7 +10,7 @@ router.get('/search', projectController.searchProjects);
 router.get('/featured', projectController.getFeaturedProjects);
 router.get('/:id', projectController.getProjectById);
 router.get('/', projectController.getProjects);
-router.post('/', projectController.createProject);
+router.post('/', ensureAuthenticated, projectController.createProject);
 router.post('/multiple', projectController.createMultipleProjects);
 router.put('/:id', projectController.updateProject);
 router.put('/star/:id', ensureAuthenticated, projectController.updateProjectStars);

@@ -15,6 +15,8 @@ export interface IProject extends Document {
   videos: string[];
   repoUrl: string;
   liveUrl: string;
+  status: string;
+  teachingAssistant: string;
 }
 
 // Project schema definition
@@ -72,6 +74,13 @@ const projectSchema = new Schema<IProject>({
     trim: true
   },
   liveUrl: {
+    type: String,
+    trim: true
+  },
+  status: {
+    type: String,
+  },
+  teachingAssistant: {
     type: String,
     trim: true
   }
