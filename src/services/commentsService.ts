@@ -17,3 +17,7 @@ export const deleteComment = async (id: string): Promise<boolean> => {
 export const editComment = async (id: string, content: Partial<IComment>): Promise<IComment | null> => {
     return await Comment.findByIdAndUpdate(id, content, { new: true });
 };
+
+export const getCommentsByProjectId = async (projectId: string): Promise<IComment[]> => {
+    return await Comment.find({ projectId });
+};

@@ -73,7 +73,7 @@ app.use(jwtCookieAuth);
 // Use routes
 app.use('/project', projectRoutes);
 app.use('/user', userRoutes);
-app.use('/comments', commentsRoutes);
+app.use('/comment', commentsRoutes);
 app.use('/auth', authRoutes);
 app.use('/upload', uploadRoutes);
 

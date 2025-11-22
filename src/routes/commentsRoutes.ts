@@ -5,6 +5,7 @@ import { validateComment, validateCommentId } from '../middlewares/validationMid
 
 const router = Router();
 
+router.get('/project/:id', commentsController.getCommentsByProjectId);
 router.post('/', ensureAuthenticated, validateComment, commentsController.addComment);
 router.get('/:id', validateCommentId, commentsController.getComment);
 router.put('/:id', ensureAuthenticated, validateCommentId, validateComment, commentsController.editComment);

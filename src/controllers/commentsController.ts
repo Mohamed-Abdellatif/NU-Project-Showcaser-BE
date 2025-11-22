@@ -17,14 +17,7 @@ export const getComment = async ( req: Request, res: Response, next: NextFunctio
 
 export const addComment = async ( req: Request, res: Response, next: NextFunction ): Promise<void> => {
     try {
-        const { content } = req.body;
-        
-        if (typeof content !== 'string' || content.trim().length === 0) {
-            res.status(400).json({ message: 'Content must be a non-empty string' });
-            return;
-        }
-        
-        const commentObj = { content };
+        const commentObj = req.body;
         const newComment = await commentsService.addComment(commentObj);
         res.status(201).json(newComment);
     } catch (error) {
@@ -56,6 +49,16 @@ export const editComment = async ( req: Request, res: Response, next: NextFuncti
             return;
         }
         res.json(updatedComment);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getCommentsByProjectId = async ( req: Request, res: Response, next: NextFunction ): Promise<void> => {
+    try {
+        const projectId = req.params.id;
+        const comments = await commentsService.getCommentsByProjectId(projectId);
+        res.json(comments);
     } catch (error) {
         next(error);
     }
