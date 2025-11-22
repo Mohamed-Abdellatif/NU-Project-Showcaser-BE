@@ -11,10 +11,10 @@ export interface IProject extends Document {
   stars: number;
   tags: string[];
   course: string;
-  images:string[];
-  videos:string[];
-  repoUrl:string;
-  liveUrl:string;
+  images: string[];
+  videos: string[];
+  repoUrl: string;
+  liveUrl: string;
 }
 
 // Project schema definition

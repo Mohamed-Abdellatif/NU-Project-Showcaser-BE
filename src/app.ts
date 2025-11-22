@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import projectRoutes from './routes/projectRoutes';
 import userRoutes from './routes/userRoute';
+import commentsRoutes from './routes/commentsRoutes';
 import session from 'express-session';
 import authRoutes from './routes/authRoutes';
 import passport, { configurePassport } from './config/passport';
@@ -71,6 +72,7 @@ app.use(jwtCookieAuth);
 // Use routes
 app.use('/project', projectRoutes);
 app.use('/user', userRoutes);
+app.use('/comments', commentsRoutes);
 app.use('/auth', authRoutes);
 
 // Error handling middleware
