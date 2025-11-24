@@ -1,15 +1,19 @@
-import { IProject, Project } from '../models/projectModel';
+import { IProject, Project } from "../models/projectModel";
 
 export const getAllProjects = async (): Promise<IProject[]> => {
-  return await Project.find({});
+  return await Project.find({ status: "accepted" });
 };
 
-export const createProject = async (projectData: Partial<IProject>): Promise<IProject> => {
+export const createProject = async (
+  projectData: Partial<IProject>
+): Promise<IProject> => {
   const project = new Project(projectData);
   return await project.save();
 };
 
-export const createMultipleProjects = async (projectsData: Partial<IProject>[]): Promise<IProject[]> => {
+export const createMultipleProjects = async (
+  projectsData: Partial<IProject>[]
+): Promise<IProject[]> => {
   const projects = await Project.insertMany(projectsData);
   return projects as IProject[];
 };
@@ -18,7 +22,10 @@ export const getProjectById = async (id: string): Promise<IProject | null> => {
   return await Project.findById(id);
 };
 
-export const updateProject = async (id: string, projectData: Partial<IProject>): Promise<IProject | null> => {
+export const updateProject = async (
+  id: string,
+  projectData: Partial<IProject>
+): Promise<IProject | null> => {
   return await Project.findByIdAndUpdate(id, projectData, { new: true });
 };
 
@@ -26,24 +33,32 @@ export const deleteProject = async (id: string): Promise<IProject | null> => {
   return await Project.findByIdAndDelete(id);
 };
 
-export const getProjectByTitle = async (title: string): Promise<IProject | null> => {
-  return await Project.findOne({ title: title });
+export const getProjectByTitle = async (
+  title: string
+): Promise<IProject | null> => {
+  return await Project.findOne({ title: title, status: "accepted" });
 };
 
 export const getProjectByMajor = async (major: string): Promise<IProject[]> => {
-  return await Project.find({ major: major });
+  return await Project.find({ major: major, status: "accepted" });
 };
 
-export const getProjectBySupervisor = async (supervisor: string): Promise<IProject[]> => {
-  return await Project.find({ supervisor: supervisor });
+export const getProjectBySupervisor = async (
+  supervisor: string
+): Promise<IProject[]> => {
+  return await Project.find({ supervisor: supervisor, status: "accepted" });
 };
 
-export const getProjectByTeamMember = async (teamMember: string): Promise<IProject[]> => {
-  return await Project.find({ teamMembers: teamMember });
+export const getProjectByTeamMember = async (
+  teamMember: string
+): Promise<IProject[]> => {
+  return await Project.find({ teamMembers: teamMember, status: "accepted" });
 };
 
-export const getProjectByTeamLeader = async (teamLeader: string): Promise<IProject[]> => {
-  return await Project.find({ teamLeader: teamLeader });
+export const getProjectByTeamLeader = async (
+  teamLeader: string
+): Promise<IProject[]> => {
+  return await Project.find({ teamLeader: teamLeader, status: "accepted" });
 };
 
 export type ProjectSearchCriteria = {
@@ -60,28 +75,28 @@ export const searchProjects = async (
   const orConditions: Record<string, unknown>[] = [];
 
   if (criteria.title) {
-    orConditions.push({ 
-      title: { $regex: criteria.title, $options: 'i' } 
+    orConditions.push({
+      title: { $regex: criteria.title, $options: "i" },
     });
   }
   if (criteria.major) {
-    orConditions.push({ 
-      major: { $regex: criteria.major, $options: 'i' } 
+    orConditions.push({
+      major: { $regex: criteria.major, $options: "i" },
     });
   }
   if (criteria.supervisor) {
-    orConditions.push({ 
-      supervisor: { $regex: criteria.supervisor, $options: 'i' } 
+    orConditions.push({
+      supervisor: { $regex: criteria.supervisor, $options: "i" },
     });
   }
   if (criteria.teamMember) {
-    orConditions.push({ 
-      teamMembers: { $regex: criteria.teamMember, $options: 'i' } 
+    orConditions.push({
+      teamMembers: { $regex: criteria.teamMember, $options: "i" },
     });
   }
   if (criteria.teamLeader) {
-    orConditions.push({ 
-      teamLeader: { $regex: criteria.teamLeader, $options: 'i' } 
+    orConditions.push({
+      teamLeader: { $regex: criteria.teamLeader, $options: "i" },
     });
   }
 
@@ -89,11 +104,11 @@ export const searchProjects = async (
     return await Project.find({});
   }
 
-  return await Project.find({ $or: orConditions });
+  return await Project.find({ $or: orConditions, status: "accepted" });
 };
 
 export const getFeaturedProjects = async (): Promise<IProject[]> => {
-  return await Project.find({})
+  return await Project.find({ status: "accepted" })
     .sort({ stars: -1 })
     .limit(6);
 };
@@ -114,32 +129,32 @@ export const getProjects = async (
   filters?: ProjectSearchCriteria
 ): Promise<PaginatedProjectsResult> => {
   const skip = (page - 1) * limit;
-  
+
   // Build filter query with AND logic (all filters must match)
   const filterQuery: Record<string, unknown> = {};
-  
+
   if (filters?.title) {
-    filterQuery.title = { $regex: filters.title, $options: 'i' };
+    filterQuery.title = { $regex: filters.title, $options: "i" };
   }
   if (filters?.major) {
-    filterQuery.course = { $regex: filters.major, $options: 'i' };
+    filterQuery.course = { $regex: filters.major, $options: "i" };
   }
   if (filters?.supervisor) {
-    filterQuery.supervisor = { $regex: filters.supervisor, $options: 'i' };
+    filterQuery.supervisor = { $regex: filters.supervisor, $options: "i" };
   }
   if (filters?.teamMember) {
-    filterQuery.teamMembers = { $regex: filters.teamMember, $options: 'i' };
+    filterQuery.teamMembers = { $regex: filters.teamMember, $options: "i" };
   }
   if (filters?.teamLeader) {
-    filterQuery.teamLeader = { $regex: filters.teamLeader, $options: 'i' };
+    filterQuery.teamLeader = { $regex: filters.teamLeader, $options: "i" };
   }
-  
+
   const [projects, total] = await Promise.all([
-    Project.find(filterQuery)
+    Project.find({ ...filterQuery, status: "accepted" })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit),
-    Project.countDocuments(filterQuery)
+    Project.countDocuments({ ...filterQuery, status: "accepted" }),
   ]);
 
   const totalPages = Math.ceil(total / limit);
@@ -150,14 +165,14 @@ export const getProjects = async (
       page,
       limit,
       total,
-      totalPages
-    }
+      totalPages,
+    },
   };
 };
 
 export const updateProjectStars = async (
   id: string,
-  action: 'add' | 'remove'
+  action: "add" | "remove"
 ): Promise<IProject | null> => {
   const project = await Project.findById(id);
   if (!project) {
@@ -165,9 +180,8 @@ export const updateProjectStars = async (
   }
 
   const currentStars = project.stars || 0;
-  const newStars = action === 'add' 
-    ? currentStars + 1 
-    : Math.max(0, currentStars - 1);
+  const newStars =
+    action === "add" ? currentStars + 1 : Math.max(0, currentStars - 1);
 
   return await Project.findByIdAndUpdate(
     id,
@@ -176,9 +190,21 @@ export const updateProjectStars = async (
   );
 };
 
-export const getStarredProjects = async (projectIds: string[]): Promise<IProject[]> => {
+export const getStarredProjects = async (
+  projectIds: string[]
+): Promise<IProject[]> => {
   if (!projectIds || projectIds.length === 0) {
     return [];
   }
   return await Project.find({ _id: { $in: projectIds } });
+};
+
+export const getPendingProjectsByTA = async (taMail: string): Promise<IProject[]> => {
+  return await Project.find({
+    teachingAssistant: {
+      $regex: taMail.trim(),
+      $options: "i",
+    },
+    status: "pending-ta",
+  });
 };

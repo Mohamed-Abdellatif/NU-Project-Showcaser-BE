@@ -367,3 +367,17 @@ export const getStarredProjects = async (
     next(error);
   }
 };
+
+export const getPendingProjectsByTA = async (
+  req: Request<{ taMail: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { taMail } = req.params;
+    const projects = await projectService.getPendingProjectsByTA(taMail);
+    res.json(projects);
+  } catch (error) {
+    next(error);
+  }
+};
