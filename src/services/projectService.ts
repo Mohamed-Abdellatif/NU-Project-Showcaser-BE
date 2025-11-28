@@ -525,3 +525,67 @@ export const getPendingProjectsByTA = async (
     status: "pending-ta",
   });
 };
+
+export const getRelatedProjects = async (
+  projectId: string
+) => {
+  const currentProject = await Project.findById(projectId);
+
+  if (!currentProject) {
+    throw new Error("Project not found");
+  }
+
+  const allProjects = await Project.find({
+    _id: { $ne: projectId }
+  });
+
+  if (allProjects.length === 0) {
+    return [];
+  }
+
+  const calculateJaccard = (tagsA: string[], tagsB: string[]) => {
+    const setA = new Set(tagsA);
+    const setB = new Set(tagsB);
+
+    const intersection = [...setA].filter(tag => setB.has(tag));
+    const union = new Set([...setA, ...setB]);
+
+    return intersection.length / union.size;
+  };
+
+  const projectsWithSimilarity = allProjects.map(project => {
+    const similarity = calculateJaccard(
+      currentProject.tags,
+      project.tags
+    );
+
+    return {
+      project,
+      similarity
+    };
+  });
+
+  const similarProjects = projectsWithSimilarity
+    .filter(item => item.similarity > 0)
+    .sort((a, b) => b.similarity - a.similarity);
+
+  const topSimilar = similarProjects.slice(0, 3).map(item => item.project);
+
+  if (topSimilar.length >= 2) {
+    return topSimilar;
+  }
+
+  const usedIds = new Set(topSimilar.map(p => p._id?.toString()));
+
+  const remainingProjects = allProjects.filter(
+    p => !usedIds.has(p._id?.toString())
+  );
+
+  const shuffled = remainingProjects.sort(() => 0.5 - Math.random());
+
+  while (topSimilar.length < 4 && shuffled.length > 0) {
+    topSimilar.push(shuffled.pop()!);
+  }
+
+  return topSimilar;
+};
