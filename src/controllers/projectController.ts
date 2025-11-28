@@ -276,6 +276,7 @@ export const getProjects = async (
       limit?: string;
       title?: string;
       major?: string;
+      course?: string;
       supervisor?: string;
       teamMember?: string;
       teamMembers?: string;
@@ -288,11 +289,13 @@ export const getProjects = async (
   try {
     const page = parseInt(req.query.page || "1", 10);
     const limit = parseInt(req.query.limit || "10", 10);
-    const { title, major, supervisor, teamMember, teamMembers, teamLeader } =
+    const { title, major, course, supervisor, teamMember, teamMembers, teamLeader } =
       req.query;
 
     // Support both teamMember (singular) and teamMembers (plural) for backward compatibility
     const teamMemberParam = teamMembers || teamMember;
+    // Support both major and course query parameters (course is the actual field name)
+    const courseParam = course || major;
 
     if (page < 1) {
       res.status(400).json({ message: "Page must be greater than 0" });
@@ -330,7 +333,7 @@ export const getProjects = async (
 
     const filters = {
       ...(title && { title }),
-      ...(major && { major }),
+      ...(courseParam && { major: courseParam }),
       ...(supervisor && { supervisor }),
       ...(parsedTeamMember && { teamMember: parsedTeamMember }),
       ...(parsedTeamLeader && { teamLeader: parsedTeamLeader }),

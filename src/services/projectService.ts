@@ -427,46 +427,44 @@ export const getProjects = async (
 
   // Combine all conditions
   // For teamMember/teamLeader filters, use OR logic (match if either matches)
-  // For other filters (title, major, supervisor), use AND logic
+  // For other filters (title, major/course, supervisor), use AND logic
   let finalQuery: Record<string, unknown> = {
     ...filterQuery,
     status: "accepted",
   };
 
   if (andConditions.length > 0) {
-    // Simplify: if we have team filters, combine them with OR logic
-    // Then combine with other filters using AND
-    if (andConditions.length === 1) {
-      // Single condition - merge it directly
-      const condition = andConditions[0];
-      if ("$or" in condition) {
-        // It's an OR condition, merge it
-        finalQuery = { ...filterQuery, ...condition, status: "accepted" };
+    // When we have team filters, we need to use $and to properly combine
+    // the filterQuery (title, course, supervisor) with team conditions
+    const allConditions: Record<string, unknown>[] = [];
+    
+    // Add all filterQuery conditions as separate $and conditions
+    Object.keys(filterQuery).forEach((key) => {
+      allConditions.push({ [key]: filterQuery[key] });
+    });
+    
+    // Add status condition
+    allConditions.push({ status: "accepted" });
+    
+    // Flatten team filter conditions
+    const teamFilterConditions: Record<string, unknown>[] = [];
+    andConditions.forEach((cond) => {
+      if ("$or" in cond) {
+        // Extract the conditions from nested $or
+        const orConditions = cond.$or as Record<string, unknown>[];
+        orConditions.forEach((oc) => teamFilterConditions.push(oc));
       } else {
-        finalQuery = { ...filterQuery, ...condition, status: "accepted" };
+        teamFilterConditions.push(cond);
       }
-    } else {
-      // Multiple conditions - use OR logic for team filters, then AND with other filters
-      // Flatten the conditions to avoid nested $or
-      const teamFilterConditions: Record<string, unknown>[] = [];
-      andConditions.forEach((cond) => {
-        if ("$or" in cond) {
-          // Extract the conditions from nested $or
-          const orConditions = cond.$or as Record<string, unknown>[];
-          orConditions.forEach((oc) => teamFilterConditions.push(oc));
-        } else {
-          teamFilterConditions.push(cond);
-        }
-      });
+    });
 
-      if (teamFilterConditions.length > 0) {
-        finalQuery = {
-          ...filterQuery,
-          $or: teamFilterConditions,
-          status: "accepted",
-        };
-      }
+    if (teamFilterConditions.length > 0) {
+      // Add team filters as an $or condition within $and
+      allConditions.push({ $or: teamFilterConditions });
     }
+    
+    // Use $and to ensure all conditions must match
+    finalQuery = { $and: allConditions };
   }
 
   const [projects, total] = await Promise.all([
