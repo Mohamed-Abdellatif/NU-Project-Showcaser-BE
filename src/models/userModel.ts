@@ -8,6 +8,14 @@ email:string;
 password?:string;
 msId?:string;
 starredProjects:string[];
+role:string;
+projects:string[];
+pendingProjects:string[];
+linkedInUrl:string;
+githubUrl:string;
+universityId:string;
+school:string;
+major:string;
 }
 
 
@@ -18,6 +26,14 @@ const userSchema = new Schema<IUser>({
     password:{type:String,required:false},
     msId:{type:String,required:false, unique:true, sparse:true},
     starredProjects:{type:[String],required:false, default: []},
+    role:{type:String,required:false, default: 'user'},
+    projects:{type:[String],required:false, default: []},
+    pendingProjects:{type:[String],required:false, default: []},
+    linkedInUrl:{type:String,required:false, default: ''},
+    githubUrl:{type:String,required:false, default: ''},
+    universityId:{type:String,required:false, default: ''},
+    school:{type:String,required:false, default: ''},
+    major:{type:String,required:false, default: ''},
 })
 
 

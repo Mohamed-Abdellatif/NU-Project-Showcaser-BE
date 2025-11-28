@@ -29,6 +29,7 @@ export function configurePassport(): void {
       },
       async (req: any, iss: string, sub: string, profile: any, accessToken: string, refreshToken: string, done: (err: unknown, user?: unknown) => void) => {
         try {
+          let firstLogin = false;
           const email = profile?._json?.preferred_username || profile?.emails?.[0]?.value;
           let firstName = profile?.name?.givenName || profile?._json?.given_name || '';
           let lastName = profile?.name?.familyName || profile?._json?.family_name || '';
@@ -48,6 +49,7 @@ export function configurePassport(): void {
           let user = await userModel.findOne({ $or: [{ msId }, { email }] });
           if (!user) {
             user = new userModel({ email, firstName, lastName, msId });
+            firstLogin = true;
           } else {
             user.firstName = firstName || user.firstName;
             user.lastName = lastName || user.lastName;
@@ -55,7 +57,7 @@ export function configurePassport(): void {
           }
           await user.save();
 
-          return done(null, { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName });
+          return done(null, { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, firstLogin });
         } catch (e) {
           return done(e);
         }
