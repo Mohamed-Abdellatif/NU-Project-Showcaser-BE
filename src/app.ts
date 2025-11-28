@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import projectRoutes from './routes/projectRoutes';
 import userRoutes from './routes/userRoute';
+import schoolRoutes from './routes/schoolRoutes';
 import commentsRoutes from './routes/commentsRoutes';
 import session from 'express-session';
 import authRoutes from './routes/authRoutes';
@@ -73,6 +74,7 @@ app.use(jwtCookieAuth);
 // Use routes
 app.use('/project', projectRoutes);
 app.use('/user', userRoutes);
+app.use('/school', schoolRoutes);
 app.use('/comment', commentsRoutes);
 app.use('/auth', authRoutes);
 app.use('/upload', uploadRoutes);
