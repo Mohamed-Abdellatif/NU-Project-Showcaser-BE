@@ -460,3 +460,17 @@ export const getPendingProjectsByTA = async (
     next(error);
   }
 };
+
+export const getRelatedProjects = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const relatedProjects = await projectService.getRelatedProjects(id);
+    res.json(relatedProjects);
+  } catch (error) {
+    next(error);
+  }
+};

@@ -10,6 +10,7 @@ router.get('/search', projectController.searchProjects);
 router.get('/featured', projectController.getFeaturedProjects);
 router.get('/starred', ensureAuthenticated, projectController.getStarredProjects);
 router.get('/pending-by-ta/:taMail', ensureAuthenticated, projectController.getPendingProjectsByTA);
+router.get('/related/:id', projectController.getRelatedProjects);
 router.get('/:id', projectController.getProjectById);
 router.get('/', projectController.getProjects);
 router.post('/', ensureAuthenticated, projectController.createProject);
