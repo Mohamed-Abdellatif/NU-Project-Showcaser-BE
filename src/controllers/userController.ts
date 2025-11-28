@@ -60,3 +60,16 @@ export const updateProfile = async (
     next(error);
   }
 };
+
+export const getProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { statusCode, data } = await userService.getProfile(req.params.userId);
+    res.status(statusCode).json(data);
+  } catch (error) {
+    next(error);
+  }
+};

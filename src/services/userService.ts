@@ -109,3 +109,13 @@ export const updateProfile = async (data: any) => {
   await user.save();
   return { data: "Profile updated successfully!", statusCode: 200 };
 };
+
+export const getProfile = async (userId: string) => {
+  // userId is the part before @ of the user email
+  const emailPattern = new RegExp(`^${userId}@`);
+  const user = await userModel.findOne({ email: emailPattern }).select('firstName lastName linkedInUrl githubUrl universityId school major email');
+  if (!user) {
+    return { data: "User not found!", statusCode: 400 };
+  }
+  return { data: user, statusCode: 200 };
+};  
