@@ -1,4 +1,9 @@
-import { IProject, Project } from "../models/projectModel";
+import { IProject, Project, ITeamMember } from "../models/projectModel";
+
+// Helper function to escape special regex characters
+const escapeRegex = (str: string): string => {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
 
 export const getAllProjects = async (): Promise<IProject[]> => {
   return await Project.find({ status: "accepted" });
@@ -52,21 +57,33 @@ export const getProjectBySupervisor = async (
 export const getProjectByTeamMember = async (
   teamMember: string
 ): Promise<IProject[]> => {
-  return await Project.find({ teamMembers: teamMember, status: "accepted" });
+  return await Project.find({
+    $or: [
+      { "teamMembers.name": { $regex: teamMember, $options: "i" } },
+      { "teamMembers.email": { $regex: teamMember, $options: "i" } },
+    ],
+    status: "accepted",
+  });
 };
 
 export const getProjectByTeamLeader = async (
   teamLeader: string
 ): Promise<IProject[]> => {
-  return await Project.find({ teamLeader: teamLeader, status: "accepted" });
+  return await Project.find({
+    $or: [
+      { "teamLeader.name": { $regex: teamLeader, $options: "i" } },
+      { "teamLeader.email": { $regex: teamLeader, $options: "i" } },
+    ],
+    status: "accepted",
+  });
 };
 
 export type ProjectSearchCriteria = {
   title?: string;
   major?: string;
   supervisor?: string;
-  teamMember?: string;
-  teamLeader?: string;
+  teamMember?: string | ITeamMember | ITeamMember[];
+  teamLeader?: string | ITeamMember;
 };
 
 export const searchProjects = async (
@@ -90,21 +107,118 @@ export const searchProjects = async (
     });
   }
   if (criteria.teamMember) {
-    orConditions.push({
-      teamMembers: { $regex: criteria.teamMember, $options: "i" },
-    });
+    if (typeof criteria.teamMember === "string") {
+      // String search - search by name or email
+
+      orConditions.push({
+        $or: [
+          {
+            "teamMembers.name": { $regex: criteria.teamMember, $options: "i" },
+          },
+          {
+            "teamMembers.email": { $regex: criteria.teamMember, $options: "i" },
+          },
+        ],
+      });
+    } else if (Array.isArray(criteria.teamMember)) {
+      // Array of team members - match projects containing any of these members by name or email
+      const memberConditions: Record<string, unknown>[] = [];
+      criteria.teamMember.forEach((member, index) => {
+        const conditions: Record<string, unknown>[] = [];
+        if (member.name && member.name.trim()) {
+          conditions.push({
+            "teamMembers.name": { $regex: member.name.trim(), $options: "i" },
+          });
+        }
+        if (member.email && member.email.trim()) {
+          const email = member.email.trim();
+
+          // Use flexible match for email - escape special chars but allow for typos
+          const escapedEmail = escapeRegex(email);
+          conditions.push({
+            "teamMembers.email": { $regex: escapedEmail, $options: "i" },
+          });
+        }
+        if (conditions.length > 0) {
+          memberConditions.push({ $or: conditions });
+        } else {
+        }
+      });
+      if (memberConditions.length > 0) {
+        orConditions.push({ $or: memberConditions });
+      } else {
+      }
+    } else {
+      // Single team member object - match by name or email
+      const conditions: Record<string, unknown>[] = [];
+      if (criteria.teamMember.name && criteria.teamMember.name.trim()) {
+        conditions.push({
+          "teamMembers.name": {
+            $regex: criteria.teamMember.name.trim(),
+            $options: "i",
+          },
+        });
+      }
+      if (criteria.teamMember.email && criteria.teamMember.email.trim()) {
+        const email = criteria.teamMember.email.trim();
+
+        // Use flexible match for email - escape special chars but allow for typos
+        const escapedEmail = escapeRegex(email);
+        conditions.push({
+          "teamMembers.email": { $regex: escapedEmail, $options: "i" },
+        });
+      }
+      if (conditions.length > 0) {
+        orConditions.push({ $or: conditions });
+      } else {
+      }
+    }
   }
   if (criteria.teamLeader) {
-    orConditions.push({
-      teamLeader: { $regex: criteria.teamLeader, $options: "i" },
-    });
+    if (typeof criteria.teamLeader === "string") {
+      // String search - search by name or email
+
+      orConditions.push({
+        $or: [
+          { "teamLeader.name": { $regex: criteria.teamLeader, $options: "i" } },
+          {
+            "teamLeader.email": { $regex: criteria.teamLeader, $options: "i" },
+          },
+        ],
+      });
+    } else {
+      // Team leader object - match by name or email
+
+      const conditions: Record<string, unknown>[] = [];
+      if (criteria.teamLeader.name && criteria.teamLeader.name.trim()) {
+        conditions.push({
+          "teamLeader.name": {
+            $regex: criteria.teamLeader.name.trim(),
+            $options: "i",
+          },
+        });
+      }
+      if (criteria.teamLeader.email && criteria.teamLeader.email.trim()) {
+        const email = criteria.teamLeader.email.trim();
+
+        // Use flexible match for email - escape special chars but allow for typos
+        const escapedEmail = escapeRegex(email);
+        conditions.push({
+          "teamLeader.email": { $regex: escapedEmail, $options: "i" },
+        });
+      }
+      if (conditions.length > 0) {
+        orConditions.push({ $or: conditions });
+      } else {
+      }
+    }
   }
 
-  if (orConditions.length === 0) {
-    return await Project.find({});
-  }
+  const query = { $or: orConditions, status: "accepted" };
 
-  return await Project.find({ $or: orConditions, status: "accepted" });
+  const results = await Project.find(query);
+
+  return results;
 };
 
 export const getFeaturedProjects = async (): Promise<IProject[]> => {
@@ -132,6 +246,7 @@ export const getProjects = async (
 
   // Build filter query with AND logic (all filters must match)
   const filterQuery: Record<string, unknown> = {};
+  const andConditions: Record<string, unknown>[] = [];
 
   if (filters?.title) {
     filterQuery.title = { $regex: filters.title, $options: "i" };
@@ -143,18 +258,220 @@ export const getProjects = async (
     filterQuery.supervisor = { $regex: filters.supervisor, $options: "i" };
   }
   if (filters?.teamMember) {
-    filterQuery.teamMembers = { $regex: filters.teamMember, $options: "i" };
+    if (typeof filters.teamMember === "string") {
+      // String search - search by name or email
+      andConditions.push({
+        $or: [
+          { "teamMembers.name": { $regex: filters.teamMember, $options: "i" } },
+          {
+            "teamMembers.email": { $regex: filters.teamMember, $options: "i" },
+          },
+        ],
+      });
+    } else if (Array.isArray(filters.teamMember)) {
+      // Array of team members - match projects containing any of these members by name or email
+      // For arrays, we'll use $or with $elemMatch for each member
+      const memberOrConditions: Record<string, unknown>[] = [];
+      filters.teamMember.forEach((member, index) => {
+        const elemMatchConditions: Record<string, unknown>[] = [];
+        if (member.name && member.name.trim()) {
+          elemMatchConditions.push({
+            name: { $regex: member.name.trim(), $options: "i" },
+          });
+        }
+        if (member.email && member.email.trim()) {
+          const email = member.email.trim();
+
+          const emailParts = email.split("@");
+          if (emailParts.length === 2) {
+            const username = emailParts[0];
+            const domain = emailParts[1].replace(/\./g, "\\.");
+            // Extract name part (before numbers) and numbers
+            const match = username.match(/^([^.]+\.)?([a-z]+)(\d+)$/i);
+            if (match) {
+              const prefix = match[1] ? match[1].replace(/\./g, "\\.") : "";
+              const namePart = match[2].substring(
+                0,
+                Math.min(8, match[2].length)
+              ); // First 8 chars of name
+              const numbers = match[3];
+              // Match: prefix + namePart (first 8 chars) + numbers + @domain
+              const matchPattern = `${prefix}${namePart}.*${numbers}@${domain}`;
+              elemMatchConditions.push({
+                email: {
+                  $regex: matchPattern,
+                  $options: "i",
+                },
+              });
+            } else {
+              // Fallback to simple partial match
+              const escapedEmail = escapeRegex(email);
+              elemMatchConditions.push({
+                email: { $regex: escapedEmail, $options: "i" },
+              });
+            }
+          } else {
+            const escapedEmail = escapeRegex(email);
+            elemMatchConditions.push({
+              email: { $regex: escapedEmail, $options: "i" },
+            });
+          }
+        }
+        if (elemMatchConditions.length > 0) {
+          // Use $elemMatch to find this member in the teamMembers array
+          memberOrConditions.push({
+            teamMembers: {
+              $elemMatch: {
+                $or: elemMatchConditions,
+              },
+            },
+          });
+        } else {
+        }
+      });
+      if (memberOrConditions.length > 0) {
+        // Match if ANY of the provided members exists in the teamMembers array
+        andConditions.push({ $or: memberOrConditions });
+      } else {
+      }
+    } else {
+      // Single team member object - match by name or email
+      const conditions: Record<string, unknown>[] = [];
+      if (filters.teamMember.name && filters.teamMember.name.trim()) {
+        conditions.push({
+          "teamMembers.name": {
+            $regex: filters.teamMember.name.trim(),
+            $options: "i",
+          },
+        });
+      }
+      if (filters.teamMember.email && filters.teamMember.email.trim()) {
+        const email = filters.teamMember.email.trim();
+
+        // Use flexible match for email - escape special chars but allow for typos
+        const escapedEmail = escapeRegex(email);
+        conditions.push({
+          "teamMembers.email": { $regex: escapedEmail, $options: "i" },
+        });
+      }
+      if (conditions.length > 0) {
+        andConditions.push({ $or: conditions });
+      } else {
+      }
+    }
   }
   if (filters?.teamLeader) {
-    filterQuery.teamLeader = { $regex: filters.teamLeader, $options: "i" };
+    if (typeof filters.teamLeader === "string") {
+      // String search - search by name or email
+      andConditions.push({
+        $or: [
+          { "teamLeader.name": { $regex: filters.teamLeader, $options: "i" } },
+          { "teamLeader.email": { $regex: filters.teamLeader, $options: "i" } },
+        ],
+      });
+    } else {
+      // Team leader object - match by name or email
+      const conditions: Record<string, unknown>[] = [];
+      if (filters.teamLeader.name && filters.teamLeader.name.trim()) {
+        conditions.push({
+          "teamLeader.name": {
+            $regex: filters.teamLeader.name.trim(),
+            $options: "i",
+          },
+        });
+      }
+      if (filters.teamLeader.email && filters.teamLeader.email.trim()) {
+        const email = filters.teamLeader.email.trim();
+        // Use flexible match - extract key identifying parts
+        const emailParts = email.split("@");
+        if (emailParts.length === 2) {
+          const username = emailParts[0];
+          const domain = emailParts[1].replace(/\./g, "\\.");
+          // Extract name part (before numbers) and numbers
+          const match = username.match(/^([^.]+\.)?([a-z]+)(\d+)$/i);
+          if (match) {
+            const prefix = match[1] ? match[1].replace(/\./g, "\\.") : "";
+            const namePart = match[2].substring(
+              0,
+              Math.min(8, match[2].length)
+            ); // First 8 chars of name
+            const numbers = match[3];
+            // Match: prefix + namePart (first 8 chars) + numbers + @domain
+            const matchPattern = `${prefix}${namePart}.*${numbers}@${domain}`;
+            conditions.push({
+              "teamLeader.email": {
+                $regex: matchPattern,
+                $options: "i",
+              },
+            });
+          } else {
+            // Fallback to simple partial match
+            const escapedEmail = escapeRegex(email);
+            conditions.push({
+              "teamLeader.email": { $regex: escapedEmail, $options: "i" },
+            });
+          }
+        } else {
+          const escapedEmail = escapeRegex(email);
+          conditions.push({
+            "teamLeader.email": { $regex: escapedEmail, $options: "i" },
+          });
+        }
+      }
+      if (conditions.length > 0) {
+        andConditions.push({ $or: conditions });
+      } else {
+      }
+    }
+  }
+
+  // Combine all conditions
+  // For teamMember/teamLeader filters, use OR logic (match if either matches)
+  // For other filters (title, major, supervisor), use AND logic
+  let finalQuery: Record<string, unknown> = {
+    ...filterQuery,
+    status: "accepted",
+  };
+
+  if (andConditions.length > 0) {
+    // Simplify: if we have team filters, combine them with OR logic
+    // Then combine with other filters using AND
+    if (andConditions.length === 1) {
+      // Single condition - merge it directly
+      const condition = andConditions[0];
+      if ("$or" in condition) {
+        // It's an OR condition, merge it
+        finalQuery = { ...filterQuery, ...condition, status: "accepted" };
+      } else {
+        finalQuery = { ...filterQuery, ...condition, status: "accepted" };
+      }
+    } else {
+      // Multiple conditions - use OR logic for team filters, then AND with other filters
+      // Flatten the conditions to avoid nested $or
+      const teamFilterConditions: Record<string, unknown>[] = [];
+      andConditions.forEach((cond) => {
+        if ("$or" in cond) {
+          // Extract the conditions from nested $or
+          const orConditions = cond.$or as Record<string, unknown>[];
+          orConditions.forEach((oc) => teamFilterConditions.push(oc));
+        } else {
+          teamFilterConditions.push(cond);
+        }
+      });
+
+      if (teamFilterConditions.length > 0) {
+        finalQuery = {
+          ...filterQuery,
+          $or: teamFilterConditions,
+          status: "accepted",
+        };
+      }
+    }
   }
 
   const [projects, total] = await Promise.all([
-    Project.find({ ...filterQuery, status: "accepted" })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit),
-    Project.countDocuments({ ...filterQuery, status: "accepted" }),
+    Project.find(finalQuery).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Project.countDocuments(finalQuery),
   ]);
 
   const totalPages = Math.ceil(total / limit);
@@ -199,7 +516,9 @@ export const getStarredProjects = async (
   return await Project.find({ _id: { $in: projectIds } });
 };
 
-export const getPendingProjectsByTA = async (taMail: string): Promise<IProject[]> => {
+export const getPendingProjectsByTA = async (
+  taMail: string
+): Promise<IProject[]> => {
   return await Project.find({
     teachingAssistant: {
       $regex: taMail.trim(),

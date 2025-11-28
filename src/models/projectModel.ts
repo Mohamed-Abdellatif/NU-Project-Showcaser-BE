@@ -1,12 +1,17 @@
 import { Schema, model, Document } from 'mongoose';
 
+export interface ITeamMember {
+  name: string;
+  email: string;
+}
+
 // Interface for the Project document
 export interface IProject extends Document {
   title: string;
   description: string;
   technologies: string[];
-  teamLeader: string;
-  teamMembers: string[];
+  teamLeader: ITeamMember;
+  teamMembers: ITeamMember[];
   supervisor: string;
   stars: number;
   tags: string[];
@@ -36,12 +41,12 @@ const projectSchema = new Schema<IProject>({
     trim: true
   }],
   teamLeader: {
-    type: String,
+    type: Object,
     required: true,
     trim: true
   },
   teamMembers: [{
-    type: String,
+    type: Object,
     trim: true
   }],
   supervisor: {

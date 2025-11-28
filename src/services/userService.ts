@@ -76,3 +76,36 @@ export const updateUserStarredProjects = async (
 
   return user;
 };
+
+export const completeProfile = async (data: any) => {
+  const { linkedInUrl, githubUrl, universityId, school, major } = data;
+  const user = await userModel.findOne({ email: data.email });
+  if (!user) {
+    return { data: "User not found!", statusCode: 400 };
+  }
+  if (user.linkedInUrl || user.githubUrl || user.universityId || user.school || user.major) {
+    return { data: "Profile already completed!", statusCode: 400 };
+  }
+  user.linkedInUrl = linkedInUrl;
+  user.githubUrl = githubUrl;
+  user.universityId = universityId;
+  user.school = school;
+  user.major = major;
+  await user.save();
+  return { data: "Profile completed successfully!", statusCode: 200 };
+};
+
+export const updateProfile = async (data: any) => {
+  const { linkedInUrl, githubUrl, universityId, school, major } = data;
+  const user = await userModel.findOne({ email: data.email });
+  if (!user) {
+    return { data: "User not found!", statusCode: 400 };
+  }
+  user.linkedInUrl = linkedInUrl;
+  user.githubUrl = githubUrl;
+  user.universityId = universityId;
+  user.school = school;
+  user.major = major;
+  await user.save();
+  return { data: "Profile updated successfully!", statusCode: 200 };
+};

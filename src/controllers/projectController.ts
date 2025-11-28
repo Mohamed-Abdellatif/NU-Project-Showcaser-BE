@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { IProject } from "../models/projectModel";
+import { IProject, ITeamMember } from "../models/projectModel";
 import * as projectService from "../services/projectService";
 import * as userService from "../services/userService";
 import { findDbUserFromSessionUser } from "../services/authService";
@@ -112,7 +112,9 @@ export const getProjectBySupervisor = async (
   try {
     const { supervisor } = req.query;
     if (!supervisor) {
-      res.status(400).json({ message: "Supervisor query parameter is required" });
+      res
+        .status(400)
+        .json({ message: "Supervisor query parameter is required" });
       return;
     }
     const projects = await projectService.getProjectBySupervisor(supervisor);
@@ -130,7 +132,9 @@ export const getProjectByTeamMember = async (
   try {
     const { teamMember } = req.query;
     if (!teamMember) {
-      res.status(400).json({ message: "TeamMember query parameter is required" });
+      res
+        .status(400)
+        .json({ message: "TeamMember query parameter is required" });
       return;
     }
     const projects = await projectService.getProjectByTeamMember(teamMember);
@@ -148,7 +152,9 @@ export const getProjectByTeamLeader = async (
   try {
     const { teamLeader } = req.query;
     if (!teamLeader) {
-      res.status(400).json({ message: "TeamLeader query parameter is required" });
+      res
+        .status(400)
+        .json({ message: "TeamLeader query parameter is required" });
       return;
     }
     const projects = await projectService.getProjectByTeamLeader(teamLeader);
@@ -159,24 +165,55 @@ export const getProjectByTeamLeader = async (
 };
 
 export const searchProjects = async (
-  req: Request<{}, {}, {}, {
-    title?: string;
-    major?: string;
-    supervisor?: string;
-    teamMember?: string;
-    teamLeader?: string;
-  }>,
+  req: Request<
+    {},
+    {},
+    {},
+    {
+      title?: string;
+      major?: string;
+      supervisor?: string;
+      teamMember?: string;
+      teamLeader?: string;
+    }
+  >,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
     const { title, major, supervisor, teamMember, teamLeader } = req.query;
+
+    // Parse teamMember and teamLeader if they are JSON strings
+    let parsedTeamMember: string | ITeamMember | ITeamMember[] | undefined =
+      teamMember;
+    let parsedTeamLeader: string | ITeamMember | undefined = teamLeader;
+
+    if (teamMember) {
+      try {
+        const parsed = JSON.parse(teamMember);
+        parsedTeamMember = parsed;
+      } catch {
+        // If parsing fails, keep as string
+        parsedTeamMember = teamMember;
+      }
+    }
+
+    if (teamLeader) {
+      try {
+        const parsed = JSON.parse(teamLeader);
+        parsedTeamLeader = parsed;
+      } catch {
+        // If parsing fails, keep as string
+        parsedTeamLeader = teamLeader;
+      }
+    }
+
     const projects = await projectService.searchProjects({
       title,
       major,
       supervisor,
-      teamMember,
-      teamLeader,
+      teamMember: parsedTeamMember,
+      teamLeader: parsedTeamLeader,
     });
     res.json(projects);
   } catch (error) {
@@ -217,7 +254,9 @@ export const createMultipleProjects = async (
 ): Promise<void> => {
   try {
     if (!Array.isArray(req.body) || req.body.length === 0) {
-      res.status(400).json({ message: "Request body must be a non-empty array of projects" });
+      res.status(400).json({
+        message: "Request body must be a non-empty array of projects",
+      });
       return;
     }
     const projects = await projectService.createMultipleProjects(req.body);
@@ -228,22 +267,32 @@ export const createMultipleProjects = async (
 };
 
 export const getProjects = async (
-  req: Request<{}, {}, {}, { 
-    page?: string; 
-    limit?: string;
-    title?: string;
-    major?: string;
-    supervisor?: string;
-    teamMember?: string;
-    teamLeader?: string;
-  }>,
+  req: Request<
+    {},
+    {},
+    {},
+    {
+      page?: string;
+      limit?: string;
+      title?: string;
+      major?: string;
+      supervisor?: string;
+      teamMember?: string;
+      teamMembers?: string;
+      teamLeader?: string;
+    }
+  >,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const page = parseInt(req.query.page || '1', 10);
-    const limit = parseInt(req.query.limit || '10', 10);
-    const { title, major, supervisor, teamMember, teamLeader } = req.query;
+    const page = parseInt(req.query.page || "1", 10);
+    const limit = parseInt(req.query.limit || "10", 10);
+    const { title, major, supervisor, teamMember, teamMembers, teamLeader } =
+      req.query;
+
+    // Support both teamMember (singular) and teamMembers (plural) for backward compatibility
+    const teamMemberParam = teamMembers || teamMember;
 
     if (page < 1) {
       res.status(400).json({ message: "Page must be greater than 0" });
@@ -255,12 +304,36 @@ export const getProjects = async (
       return;
     }
 
+    // Parse teamMember and teamLeader if they are JSON strings
+    let parsedTeamMember: string | ITeamMember | ITeamMember[] | undefined =
+      teamMemberParam;
+    let parsedTeamLeader: string | ITeamMember | undefined = teamLeader;
+
+    if (teamMemberParam) {
+      try {
+        const parsed = JSON.parse(teamMemberParam);
+        parsedTeamMember = parsed;
+      } catch (error) {
+        // If parsing fails, keep as string
+        parsedTeamMember = teamMemberParam;
+      }
+    }
+
+    if (teamLeader) {
+      try {
+        const parsed = JSON.parse(teamLeader);
+        parsedTeamLeader = parsed;
+      } catch (error) {
+        parsedTeamLeader = teamLeader;
+      }
+    }
+
     const filters = {
       ...(title && { title }),
       ...(major && { major }),
       ...(supervisor && { supervisor }),
-      ...(teamMember && { teamMember }),
-      ...(teamLeader && { teamLeader }),
+      ...(parsedTeamMember && { teamMember: parsedTeamMember }),
+      ...(parsedTeamLeader && { teamLeader: parsedTeamLeader }),
     };
 
     const result = await projectService.getProjects(page, limit, filters);
@@ -271,7 +344,7 @@ export const getProjects = async (
 };
 
 export const updateProjectStars = async (
-  req: Request<{ id: string }, {}, { action?: 'add' | 'remove' }>,
+  req: Request<{ id: string }, {}, { action?: "add" | "remove" }>,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -279,8 +352,10 @@ export const updateProjectStars = async (
     const { id } = req.params;
     const { action } = req.body;
 
-    if (!action || (action !== 'add' && action !== 'remove')) {
-      res.status(400).json({ message: "Action must be either 'add' or 'remove'" });
+    if (!action || (action !== "add" && action !== "remove")) {
+      res
+        .status(400)
+        .json({ message: "Action must be either 'add' or 'remove'" });
       return;
     }
 
@@ -288,7 +363,7 @@ export const updateProjectStars = async (
     const sessionUser = (req as any).user as
       | { sub?: string; id?: string; email?: string }
       | undefined;
-    
+
     if (!sessionUser) {
       res.status(401).json({ message: "User not found in session" });
       return;
@@ -300,11 +375,11 @@ export const updateProjectStars = async (
       res.status(404).json({ message: "User not found" });
       return;
     }
-    if(!(dbUser as any).starredProjects.includes(id) && action === 'remove') {
+    if (!(dbUser as any).starredProjects.includes(id) && action === "remove") {
       res.status(400).json({ message: "Project not starred" });
       return;
     }
-    if((dbUser as any).starredProjects.includes(id) && action === 'add') {
+    if ((dbUser as any).starredProjects.includes(id) && action === "add") {
       res.status(400).json({ message: "Project already starred" });
       return;
     }
@@ -316,7 +391,8 @@ export const updateProjectStars = async (
     }
 
     // Update user's starred projects
-    const userId = (dbUser as any)._id?.toString() || (dbUser as any).id?.toString();
+    const userId =
+      (dbUser as any)._id?.toString() || (dbUser as any).id?.toString();
     if (!userId) {
       res.status(500).json({ message: "Unable to get user ID" });
       return;
@@ -339,7 +415,7 @@ export const getStarredProjects = async (
     const sessionUser = (req as any).user as
       | { sub?: string; id?: string; email?: string }
       | undefined;
-    
+
     if (!sessionUser) {
       res.status(401).json({ message: "User not found in session" });
       return;
@@ -354,7 +430,7 @@ export const getStarredProjects = async (
 
     // Get starred project IDs from user
     const starredProjectIds = (dbUser as any).starredProjects || [];
-    
+
     if (starredProjectIds.length === 0) {
       res.json([]);
       return;

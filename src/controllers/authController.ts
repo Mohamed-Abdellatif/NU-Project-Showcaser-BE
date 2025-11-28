@@ -3,11 +3,28 @@ import {
   findDbUserFromSessionUser,
   clearAuthCookies,
 } from "../services/authService";
+import userModel from "../models/userModel";
 
-export const loginSuccess = (req: Request, res: Response): void => {
-  const dashboardUrl =
-    process.env.FRONTEND_DASHBOARD_URL || "http://localhost:5173/";
-  res.redirect(dashboardUrl);
+export const loginSuccess = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const sessionUser = (req as any).user as
+    | { sub?: string; id?: string; email?: string; firstLogin?: boolean }
+    | undefined;
+  if (sessionUser) {
+    if (sessionUser?.firstLogin) {
+      const redirectUrl =
+        process.env.FRONTEND_FIRST_LOGIN_REDIRECT_URL ||
+        "http://localhost:5173/complete-profile";
+      res.redirect(redirectUrl);
+      return;
+    } else {
+      const dashboardUrl =
+        process.env.FRONTEND_DASHBOARD_URL || "http://localhost:5173/";
+      res.redirect(dashboardUrl);
+    }
+  }
 };
 
 export const profile = (req: Request, res: Response): void => {
