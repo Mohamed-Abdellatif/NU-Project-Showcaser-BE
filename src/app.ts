@@ -10,6 +10,7 @@ import commentsRoutes from './routes/commentsRoutes';
 import session from 'express-session';
 import authRoutes from './routes/authRoutes';
 import uploadRoutes from './routes/uploadRoutes';
+import notifyRoutes from './routes/notifyRoutes';
 import passport, { configurePassport } from './config/passport';
 import cookieParser from 'cookie-parser';
 import { jwtCookieAuth } from './middlewares/jwtCookieAuth';
@@ -78,6 +79,7 @@ app.use('/school', schoolRoutes);
 app.use('/comment', commentsRoutes);
 app.use('/auth', authRoutes);
 app.use('/upload', uploadRoutes);
+app.use('/notify', notifyRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
