@@ -16,6 +16,8 @@ githubUrl:string;
 universityId:string;
 school:string;
 major:string;
+deactivated:boolean;
+deactivateRequested:boolean;
 }
 
 
@@ -34,6 +36,8 @@ const userSchema = new Schema<IUser>({
     universityId:{type:String,required:false, default: ''},
     school:{type:String,required:false, default: ''},
     major:{type:String,required:false, default: ''},
+    deactivated:{type:Boolean,required:false, default: false},
+    deactivateRequested:{type:Boolean,required:false, default: false},
 })
 
 

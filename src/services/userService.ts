@@ -165,3 +165,19 @@ export const getProfile = async (userId: string) => {
     statusCode: 200,
   };
 };
+
+export const requestDeactivate = async (data: any) => {
+  const user = await userModel.findOne({ email: data.email });
+  if (!user) {
+    return { data: "User not found!", statusCode: 400 };
+  }
+  if (user.deactivated) {
+    return { data: "User already deactivated!", statusCode: 400 };
+  }
+  if (user.deactivateRequested) {
+    return { data: "User has already requested deactivation!", statusCode: 400 };
+  }
+  user.deactivateRequested = true;
+  await user.save();
+  return { data: "User deactivation requested successfully!", statusCode: 200 };
+};
