@@ -9,6 +9,7 @@ const router = Router();
 // Image route supports both single and multiple files (up to 10 files)
 router.post('/image', uploadImage.array('file', 10), handleMulterError, ensureAuthenticated, uploadController.uploadImage);
 router.post('/video', uploadVideo.single('file'), handleMulterError, ensureAuthenticated, uploadController.uploadVideo);
+router.post('/suggestion-image', uploadImage.single('file'), handleMulterError, uploadController.uploadImage);
 
 export default router;
 
