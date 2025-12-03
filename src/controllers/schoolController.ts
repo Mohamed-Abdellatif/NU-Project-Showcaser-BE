@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { ISchool, School } from "../models/schoolsModel";
+import { ISchool } from "../models/schoolModel";
 import * as schoolService from "../services/schoolService";
 
 export const getAllSchools = async (

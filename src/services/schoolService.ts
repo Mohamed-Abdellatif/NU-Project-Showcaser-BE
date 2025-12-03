@@ -1,4 +1,4 @@
-import { ISchool, School } from "../models/schoolsModel";
+import { ISchool, School } from "../models/schoolModel";
 
 export const getAllSchools = async (): Promise<ISchool[]> => {
     return await School.find();

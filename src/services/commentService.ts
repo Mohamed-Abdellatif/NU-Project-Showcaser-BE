@@ -1,4 +1,4 @@
-import { IComment, Comment } from '../models/commentsModel';
+import { IComment, Comment } from '../models/commentModel';
 
 export const getComment = async (id: string): Promise<IComment | null> => {
     return await Comment.findById(id);
