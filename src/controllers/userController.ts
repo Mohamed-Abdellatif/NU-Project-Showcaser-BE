@@ -73,3 +73,16 @@ export const getProfile = async (
     next(error);
   }
 };
+
+export const requestDeactivate = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { statusCode, data } = await userService.requestDeactivate(req.body);
+    res.status(statusCode).json(data);
+  } catch (error) {
+    next(error);
+  }
+};
