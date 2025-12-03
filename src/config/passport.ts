@@ -69,7 +69,6 @@ export function configurePassport(): void {
             user.firstName = firstName || user.firstName;
             user.lastName = lastName || user.lastName;
             user.msId = user.msId || msId;
-            user.role = role;
           }
           await user.save();
 
