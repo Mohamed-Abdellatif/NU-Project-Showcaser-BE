@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as commentsController from '../controllers/commentsController';
+import * as commentsController from '../controllers/commentController';
 import { ensureAuthenticated } from '../middlewares/authGuard';
 import { validateComment, validateCommentId } from '../middlewares/validationMiddleware';
 
