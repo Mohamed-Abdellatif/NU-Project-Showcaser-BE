@@ -48,3 +48,67 @@ export const getSuggestionById = async (
     next(error);
   }
 };
+
+export const getAllSuggestionsByAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const suggestions = await suggestionService.getAllSuggestionsByAdmin();
+    res.json(suggestions);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getSuggestionByAdmin = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const suggestion = await suggestionService.getSuggestionByAdmin(req.params.id);
+    if (!suggestion) {
+      res.status(404).json({ message: "Suggestion not found" });
+      return;
+    }
+    res.json(suggestion);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const editSuggestionByAdmin = async (
+  req: Request<{ suggestionId: string }, {}, Partial<ISuggestion>>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const suggestion = await suggestionService.editSuggestionByAdmin(req.params.suggestionId, req.body);
+    if (!suggestion) {
+      res.status(404).json({ message: "Suggestion not found" });
+      return;
+    }
+    res.json(suggestion);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteSuggestionByAdmin = async (
+  req: Request<{ suggestionId: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const suggestion = await suggestionService.deleteSuggestionByAdmin(req.params.suggestionId);
+    if (!suggestion) {
+      res.status(404).json({ message: "Suggestion not found" });
+      return;
+    }
+    res.json({ message: "Suggestion deleted successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
