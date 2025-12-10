@@ -12,3 +12,22 @@ export const getAllSuggestions = async (): Promise<ISuggestion[]> => {
 export const getSuggestionById = async (id: string): Promise<ISuggestion | null> => {
     return await Suggestion.findById(id);
 };
+
+export const getAllSuggestionsByAdmin = async (): Promise<ISuggestion[]> => {
+    return await Suggestion.find({});
+};
+
+export const getSuggestionByAdmin = async (id: string): Promise<ISuggestion | null> => {
+    return await Suggestion.findById(id);
+};
+
+export const editSuggestionByAdmin = async (
+    suggestionId: string,
+    suggestionData: Partial<ISuggestion>
+): Promise<ISuggestion | null> => {
+    return await Suggestion.findByIdAndUpdate(suggestionId, suggestionData, { new: true });
+};
+
+export const deleteSuggestionByAdmin = async (suggestionId: string): Promise<ISuggestion | null> => {
+    return await Suggestion.findByIdAndDelete(suggestionId);
+};

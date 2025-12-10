@@ -5,6 +5,26 @@ const escapeRegex = (str: string): string => {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 };
 
+export const getAllProjectsByAdmin = async (): Promise<IProject[]> => {
+  return await Project.find({});
+};
+
+export const getProjectByAdmin = async (id: string): Promise<IProject | null> => {
+  return await Project.findById(id);
+};
+
+export const editProjectByAdmin = async (
+  projectId: string,
+  projectData: Partial<IProject>
+): Promise<IProject | null> => {
+  return await Project.findByIdAndUpdate(projectId, projectData, { new: true });
+};
+
+export const deleteProjectByAdmin = async (projectId: string): Promise<IProject | null> => {
+  return await Project.findByIdAndDelete(projectId);
+};
+
+
 export const getAllProjects = async (): Promise<IProject[]> => {
   return await Project.find({ status: "accepted" });
 };
