@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import projectRoutes from './routes/projectRoutes';
-import userRoutes from './routes/userRoute';
+import userRoutes from './routes/userRoutes';
 import schoolRoutes from './routes/schoolRoutes';
 import courseRoutes from './routes/courseRoutes';
 import commentRoutes from './routes/commentRoutes';
