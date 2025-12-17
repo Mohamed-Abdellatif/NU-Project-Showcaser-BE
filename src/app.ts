@@ -6,9 +6,11 @@ import dotenv from 'dotenv';
 import projectRoutes from './routes/projectRoutes';
 import userRoutes from './routes/userRoute';
 import schoolRoutes from './routes/schoolRoutes';
+import courseRoutes from './routes/courseRoutes';
 import commentRoutes from './routes/commentRoutes';
 import suggestionRoutes from './routes/suggestionRoutes';
 import session from 'express-session';
+import MongoStore from 'connect-mongo';
 import authRoutes from './routes/authRoutes';
 import uploadRoutes from './routes/uploadRoutes';
 import notifyRoutes from './routes/notifyRoutes';
@@ -21,9 +23,13 @@ dotenv.config();
 
 const app = express();
 
+// Heroku / reverse proxies must be trusted so secure cookies are sent correctly
+// and req.secure is set based on X-Forwarded-Proto.
+app.set('trust proxy', 1);
+
 // Configure allowed origins based on environment
 const allowedOrigins = (process.env.NODE_ENV === 'production'
-  ? [process.env.PRODUCTION_FRONTEND_URL]
+  ? process.env.FRONTEND_URLS?.split(',') || []
   : process.env.FRONTEND_URLS?.split(',') || ['http://localhost:5173']).filter((origin): origin is string => !!origin);
 
 // Middleware
@@ -57,7 +63,8 @@ app.use(cookieParser());
 
 // Session and Passport
 const sessionSecret = process.env.SESSION_SECRET || 'keyboard cat';
-app.use(session({
+
+const sessionOptions: session.SessionOptions = {
   secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
@@ -66,7 +73,21 @@ app.use(session({
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
   }
-}));
+};
+
+// Use a persistent store in production (no in-memory sessions on Heroku)
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.MONGODB_URI) {
+    throw new Error('MONGODB_URI must be set in production for session storage');
+  }
+  sessionOptions.store = MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI,
+    collectionName: 'sessions',
+    ttl: 14 * 24 * 60 * 60 // 14 days
+  });
+}
+
+app.use(session(sessionOptions));
 
 configurePassport();
 app.use(passport.initialize());
@@ -78,6 +99,7 @@ app.use(jwtCookieAuth);
 app.use('/project', projectRoutes);
 app.use('/user', userRoutes);
 app.use('/school', schoolRoutes);
+app.use('/course', courseRoutes);
 app.use('/comment', commentRoutes);
 app.use('/suggestion', suggestionRoutes);
 app.use('/auth', authRoutes);

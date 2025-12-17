@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import jwt from "jsonwebtoken";
 import {
   findDbUserFromSessionUser,
   clearAuthCookies,
@@ -12,18 +13,50 @@ export const loginSuccess = async (
   const sessionUser = (req as any).user as
     | { sub?: string; id?: string; email?: string; firstLogin?: boolean }
     | undefined;
-  if (sessionUser) {
-    if (sessionUser?.firstLogin) {
-      const redirectUrl =
-        process.env.FRONTEND_FIRST_LOGIN_REDIRECT_URL ||
-        "http://localhost:5173/complete-profile";
-      res.redirect(redirectUrl);
-      return;
-    } else {
-      const dashboardUrl =
-        process.env.FRONTEND_DASHBOARD_URL || "http://localhost:5173/";
-      res.redirect(dashboardUrl);
+
+  if (!sessionUser) {
+    res.redirect(
+      process.env.FRONTEND_HOME_URL || "http://localhost:5173/"
+    );
+    return;
+  }
+
+  // Issue a JWT auth cookie so the frontend can authenticate via cookies
+  // without depending on cross-domain Passport sessions.
+  const dbUser = await findDbUserFromSessionUser(sessionUser);
+  if (dbUser) {
+    const tokenPayload = {
+      id: dbUser.id,
+      email: dbUser.email,
+      role: (dbUser as any).role,
+    };
+
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw new Error("JWT_SECRET must be set");
     }
+
+    const token = jwt.sign(tokenPayload, jwtSecret, {
+      expiresIn: "7d",
+    });
+
+    res.cookie("auth_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    });
+  }
+
+  if (sessionUser?.firstLogin) {
+    const redirectUrl =
+      process.env.FRONTEND_FIRST_LOGIN_REDIRECT_URL ||
+      "http://localhost:5173/complete-profile";
+    res.redirect(redirectUrl);
+    return;
+  } else {
+    const dashboardUrl =
+      process.env.FRONTEND_DASHBOARD_URL || "http://localhost:5173/";
+    res.redirect(dashboardUrl);
   }
 };
 
@@ -51,15 +84,43 @@ export const logout = (req: Request, res: Response): void => {
   const homeUrl = process.env.FRONTEND_HOME_URL || "http://localhost:5173/";
   const aadLogoutBase =
     "https://login.microsoftonline.com/common/oauth2/v2.0/logout";
+  
+  // Check if this is an API request (Accept: application/json) or browser navigation
+  const isApiRequest = req.headers.accept?.includes("application/json") || 
+                       req.query.format === "json";
+  
   const finish = () => {
     req.session?.destroy(() => {
-      res.clearCookie("connect.sid");
+      // Clear session cookie with proper cross-domain options
+      res.clearCookie("connect.sid", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        path: "/"
+      });
       clearAuthCookies(res);
-      // Always clear AAD session to avoid silent re-login
+      
+      // Build Microsoft logout URL with redirect back to frontend
+      // IMPORTANT: The redirect URI must be registered in Azure AD App Registration
+      // Go to: Azure Portal → App Registration → Authentication → Add redirect URI
       const postLogout = encodeURIComponent(homeUrl);
-      res.redirect(`${aadLogoutBase}?post_logout_redirect_uri=${postLogout}`);
+      const logoutUrl = `${aadLogoutBase}?post_logout_redirect_uri=${postLogout}`;
+      
+      // If API request, return JSON with logout URL. Otherwise redirect to Microsoft logout
+      if (isApiRequest) {
+        res.json({ 
+          success: true,
+          logoutUrl,
+          message: "Logged out successfully"
+        });
+      } else {
+        // Direct browser navigation - redirect to Microsoft logout
+        // Microsoft will then redirect back to homeUrl after logout
+        res.redirect(logoutUrl);
+      }
     });
   };
+  
   const doLogout = (req as any).logout;
   if (typeof doLogout === "function") {
     try {
