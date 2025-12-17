@@ -85,6 +85,10 @@ export const logout = (req: Request, res: Response): void => {
   const aadLogoutBase =
     "https://login.microsoftonline.com/common/oauth2/v2.0/logout";
   
+  // Check if this is an API request (Accept: application/json) or browser navigation
+  const isApiRequest = req.headers.accept?.includes("application/json") || 
+                       req.query.format === "json";
+  
   const finish = () => {
     req.session?.destroy(() => {
       // Clear session cookie with proper cross-domain options
@@ -100,13 +104,17 @@ export const logout = (req: Request, res: Response): void => {
       const postLogout = encodeURIComponent(homeUrl);
       const logoutUrl = `${aadLogoutBase}?post_logout_redirect_uri=${postLogout}`;
       
-      // In cross-domain setup, return JSON with logout URL instead of redirecting
-      // Frontend will handle the redirect via window.location.href
-      res.json({ 
-        success: true, 
-        logoutUrl,
-        message: "Logged out successfully" 
-      });
+      // If API request, return JSON. Otherwise redirect (browser navigation)
+      if (isApiRequest) {
+        res.json({ 
+          success: true, 
+          logoutUrl,
+          message: "Logged out successfully" 
+        });
+      } else {
+        // Direct browser navigation - redirect to Microsoft logout
+        res.redirect(logoutUrl);
+      }
     });
   };
   
