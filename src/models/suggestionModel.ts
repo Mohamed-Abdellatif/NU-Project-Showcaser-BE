@@ -8,10 +8,17 @@ export interface ISuggestion extends Document {
 }
 
 // Suggestion schema definition
-const suggestionSchema = new Schema<ISuggestion>({
-  title: { type: String, required: true },
-  description: { type: String, required: true },
-  images: { type: [String], required: false },
-});
+const suggestionSchema = new Schema<ISuggestion>(
+  {
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    images: { type: [String], required: false },
+  },
+  {
+    timestamps: {
+      createdAt: true,
+    },
+  }
+);
 
 export const Suggestion = model<ISuggestion>("Suggestion", suggestionSchema);

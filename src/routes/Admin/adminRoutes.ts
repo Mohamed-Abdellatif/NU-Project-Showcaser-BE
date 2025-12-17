@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { ensureAdmin } from "../../middlewares/adminGuard";
+import * as adminController from "../../controllers/adminController";
 import projectAdminRoutes from "./projectAdminRoutes";
 import userAdminRoutes from "./userAdminRoutes";
 import commentAdminRoutes from "./commentAdminRoutes";
@@ -10,6 +11,9 @@ const router = Router();
 
 // Apply admin role check to all admin routes
 router.use(ensureAdmin);
+
+// Admin dashboard stats endpoint
+router.get("/stats", adminController.getAdminStats);
 
 router.use(projectAdminRoutes);
 router.use(userAdminRoutes);

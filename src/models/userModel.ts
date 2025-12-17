@@ -38,6 +38,11 @@ const userSchema = new Schema<IUser>({
     major:{type:String,required:false, default: ''},
     deactivated:{type:Boolean,required:false, default: false},
     deactivateRequested:{type:Boolean,required:false, default: false},
+}, {
+    timestamps: {
+        createdAt: true,
+        updatedAt: false
+    }
 })
 
 
