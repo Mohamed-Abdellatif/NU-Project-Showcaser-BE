@@ -84,15 +84,32 @@ export const logout = (req: Request, res: Response): void => {
   const homeUrl = process.env.FRONTEND_HOME_URL || "http://localhost:5173/";
   const aadLogoutBase =
     "https://login.microsoftonline.com/common/oauth2/v2.0/logout";
+  
   const finish = () => {
     req.session?.destroy(() => {
-      res.clearCookie("connect.sid");
+      // Clear session cookie with proper cross-domain options
+      res.clearCookie("connect.sid", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        path: "/"
+      });
       clearAuthCookies(res);
-      // Always clear AAD session to avoid silent re-login
+      
+      // Build Microsoft logout URL
       const postLogout = encodeURIComponent(homeUrl);
-      res.redirect(`${aadLogoutBase}?post_logout_redirect_uri=${postLogout}`);
+      const logoutUrl = `${aadLogoutBase}?post_logout_redirect_uri=${postLogout}`;
+      
+      // In cross-domain setup, return JSON with logout URL instead of redirecting
+      // Frontend will handle the redirect via window.location.href
+      res.json({ 
+        success: true, 
+        logoutUrl,
+        message: "Logged out successfully" 
+      });
     });
   };
+  
   const doLogout = (req as any).logout;
   if (typeof doLogout === "function") {
     try {
