@@ -27,3 +27,29 @@ export const getAllCourses = async (
     next(error);
   }
 };
+
+export const getCourseByCode = async (
+  req: Request<{ code: string }>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const course = await courseService.getCourseByCode(req.params.code);
+    res.status(200).json(course);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteCourseByCode = async (
+  req: Request<{ code: string }>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    await courseService.deleteCourseByCode(req.params.code);
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+};
