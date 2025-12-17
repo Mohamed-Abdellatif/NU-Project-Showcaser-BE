@@ -34,8 +34,16 @@ export const getAllSchoolsByAdmin = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const schools = await schoolService.getAllSchoolsByAdmin();
-        res.json(schools);
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        
+        const filters: schoolService.SchoolAdminFilters = {
+            name: req.query.name as string,
+            majors: req.query.majors as string,
+        };
+
+        const result = await schoolService.getAllSchoolsByAdmin(page, limit, filters);
+        res.json(result);
     } catch (error) {
         next(error);
     }

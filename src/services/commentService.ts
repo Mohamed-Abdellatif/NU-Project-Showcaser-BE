@@ -22,8 +22,70 @@ export const getCommentsByProjectId = async (projectId: string): Promise<ICommen
     return await Comment.find({ projectId });
 };
 
-export const getAllCommentsByAdmin = async (): Promise<IComment[]> => {
-    return await Comment.find({});
+export interface PaginatedResult<T> {
+    data: T[];
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+    };
+}
+
+export interface CommentAdminFilters {
+    content?: string;
+    projectId?: string;
+    userId?: string;
+    authorFirstName?: string;
+    authorLastName?: string;
+    authorEmail?: string;
+}
+
+export const getAllCommentsByAdmin = async (
+    page: number = 1,
+    limit: number = 10,
+    filters?: CommentAdminFilters
+): Promise<PaginatedResult<IComment>> => {
+    const skip = (page - 1) * limit;
+
+    // Build filter query
+    const filterQuery: Record<string, unknown> = {};
+
+    if (filters?.content) {
+        filterQuery.content = { $regex: filters.content, $options: "i" };
+    }
+    if (filters?.projectId) {
+        filterQuery.projectId = filters.projectId;
+    }
+    if (filters?.userId) {
+        filterQuery.userId = filters.userId;
+    }
+    if (filters?.authorFirstName) {
+        filterQuery.authorFirstName = { $regex: filters.authorFirstName, $options: "i" };
+    }
+    if (filters?.authorLastName) {
+        filterQuery.authorLastName = { $regex: filters.authorLastName, $options: "i" };
+    }
+    if (filters?.authorEmail) {
+        filterQuery.authorEmail = { $regex: filters.authorEmail, $options: "i" };
+    }
+
+    const [data, total] = await Promise.all([
+        Comment.find(filterQuery).sort({ createdAt: -1 }).skip(skip).limit(limit),
+        Comment.countDocuments(filterQuery),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+        data,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages,
+        },
+    };
 };
 
 export const getCommentByAdmin = async (id: string): Promise<IComment | null> => {

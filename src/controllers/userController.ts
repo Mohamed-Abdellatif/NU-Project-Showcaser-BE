@@ -93,8 +93,22 @@ export const getAllUsersByAdmin = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const users = await userService.getAllUsersByAdmin();
-    res.json(users);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    
+    const filters: userService.UserAdminFilters = {
+      firstName: req.query.firstName as string,
+      lastName: req.query.lastName as string,
+      email: req.query.email as string,
+      role: req.query.role as string,
+      school: req.query.school as string,
+      major: req.query.major as string,
+      deactivated: req.query.deactivated as string,
+      deactivateRequested: req.query.deactivateRequested as string,
+    };
+
+    const result = await userService.getAllUsersByAdmin(page, limit, filters);
+    res.json(result);
   } catch (error) {
     next(error);
   }

@@ -182,8 +182,78 @@ export const requestDeactivate = async (data: any) => {
   return { data: "User deactivation requested successfully!", statusCode: 200 };
 };
 
-export const getAllUsersByAdmin = async (): Promise<IUser[]> => {
-  return await userModel.find({});
+export interface PaginatedResult<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface UserAdminFilters {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  role?: string;
+  school?: string;
+  major?: string;
+  deactivated?: string;
+  deactivateRequested?: string;
+}
+
+export const getAllUsersByAdmin = async (
+  page: number = 1,
+  limit: number = 10,
+  filters?: UserAdminFilters
+): Promise<PaginatedResult<IUser>> => {
+  const skip = (page - 1) * limit;
+
+  // Build filter query
+  const filterQuery: Record<string, unknown> = {};
+
+  if (filters?.firstName) {
+    filterQuery.firstName = { $regex: filters.firstName, $options: "i" };
+  }
+  if (filters?.lastName) {
+    filterQuery.lastName = { $regex: filters.lastName, $options: "i" };
+  }
+  if (filters?.email) {
+    filterQuery.email = { $regex: filters.email, $options: "i" };
+  }
+  if (filters?.role) {
+    filterQuery.role = { $regex: filters.role, $options: "i" };
+  }
+  if (filters?.school) {
+    filterQuery.school = { $regex: filters.school, $options: "i" };
+  }
+  if (filters?.major) {
+    filterQuery.major = { $regex: filters.major, $options: "i" };
+  }
+  if (filters?.deactivated) {
+    filterQuery.deactivated = filters.deactivated === "true";
+  }
+  if (filters?.deactivateRequested) {
+    filterQuery.deactivateRequested = filters.deactivateRequested === "true";
+  }
+
+  const [data, total] = await Promise.all([
+    userModel.find(filterQuery).sort({ email: 1 }).skip(skip).limit(limit),
+    userModel.countDocuments(filterQuery),
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
+
+  return {
+    data,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+    },
+  };
 };
 
 export const getUserByAdmin = async (id: string): Promise<IUser | null> => {

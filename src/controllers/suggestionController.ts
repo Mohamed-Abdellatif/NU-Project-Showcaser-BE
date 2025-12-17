@@ -55,8 +55,16 @@ export const getAllSuggestionsByAdmin = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const suggestions = await suggestionService.getAllSuggestionsByAdmin();
-    res.json(suggestions);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    
+    const filters: suggestionService.SuggestionAdminFilters = {
+      title: req.query.title as string,
+      description: req.query.description as string,
+    };
+
+    const result = await suggestionService.getAllSuggestionsByAdmin(page, limit, filters);
+    res.json(result);
   } catch (error) {
     next(error);
   }

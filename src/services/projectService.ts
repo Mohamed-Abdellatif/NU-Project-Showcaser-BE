@@ -5,8 +5,80 @@ const escapeRegex = (str: string): string => {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 };
 
-export const getAllProjectsByAdmin = async (): Promise<IProject[]> => {
-  return await Project.find({});
+export interface PaginatedResult<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface ProjectAdminFilters {
+  title?: string;
+  status?: string;
+  course?: string;
+  supervisor?: string;
+  tags?: string;
+  teamLeader?: string;
+  teamMember?: string;
+}
+
+export const getAllProjectsByAdmin = async (
+  page: number = 1,
+  limit: number = 10,
+  filters?: ProjectAdminFilters
+): Promise<PaginatedResult<IProject>> => {
+  const skip = (page - 1) * limit;
+
+  // Build filter query
+  const filterQuery: Record<string, unknown> = {};
+
+  if (filters?.title) {
+    filterQuery.title = { $regex: filters.title, $options: "i" };
+  }
+  if (filters?.status) {
+    filterQuery.status = { $regex: filters.status, $options: "i" };
+  }
+  if (filters?.course) {
+    filterQuery.course = { $regex: filters.course, $options: "i" };
+  }
+  if (filters?.supervisor) {
+    filterQuery.supervisor = { $regex: filters.supervisor, $options: "i" };
+  }
+  if (filters?.tags) {
+    filterQuery.tags = { $in: [new RegExp(filters.tags, "i")] };
+  }
+  if (filters?.teamLeader) {
+    filterQuery.$or = [
+      { "teamLeader.name": { $regex: filters.teamLeader, $options: "i" } },
+      { "teamLeader.email": { $regex: filters.teamLeader, $options: "i" } },
+    ];
+  }
+  if (filters?.teamMember) {
+    filterQuery.$or = [
+      { "teamMembers.name": { $regex: filters.teamMember, $options: "i" } },
+      { "teamMembers.email": { $regex: filters.teamMember, $options: "i" } },
+    ];
+  }
+
+  const [data, total] = await Promise.all([
+    Project.find(filterQuery).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Project.countDocuments(filterQuery),
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
+
+  return {
+    data,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+    },
+  };
 };
 
 export const getProjectByAdmin = async (id: string): Promise<IProject | null> => {

@@ -11,8 +11,21 @@ export const getAllProjectsByAdmin = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const projects = await projectService.getAllProjectsByAdmin();
-    res.json(projects);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    
+    const filters: projectService.ProjectAdminFilters = {
+      title: req.query.title as string,
+      status: req.query.status as string,
+      course: req.query.course as string,
+      supervisor: req.query.supervisor as string,
+      tags: req.query.tags as string,
+      teamLeader: req.query.teamLeader as string,
+      teamMember: req.query.teamMember as string,
+    };
+
+    const result = await projectService.getAllProjectsByAdmin(page, limit, filters);
+    res.json(result);
   } catch (error) {
     next(error);
   }

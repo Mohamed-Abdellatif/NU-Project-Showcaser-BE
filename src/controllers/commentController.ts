@@ -93,8 +93,20 @@ export const getAllCommentsByAdmin = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const comments = await commentsService.getAllCommentsByAdmin();
-    res.json(comments);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    
+    const filters: commentsService.CommentAdminFilters = {
+      content: req.query.content as string,
+      projectId: req.query.projectId as string,
+      userId: req.query.userId as string,
+      authorFirstName: req.query.authorFirstName as string,
+      authorLastName: req.query.authorLastName as string,
+      authorEmail: req.query.authorEmail as string,
+    };
+
+    const result = await commentsService.getAllCommentsByAdmin(page, limit, filters);
+    res.json(result);
   } catch (error) {
     next(error);
   }
