@@ -28,7 +28,7 @@ app.set('trust proxy', 1);
 
 // Configure allowed origins based on environment
 const allowedOrigins = (process.env.NODE_ENV === 'production'
-  ? [process.env.PRODUCTION_FRONTEND_URL]
+  ? process.env.FRONTEND_URLS?.split(',') || []
   : process.env.FRONTEND_URLS?.split(',') || ['http://localhost:5173']).filter((origin): origin is string => !!origin);
 
 // Middleware
