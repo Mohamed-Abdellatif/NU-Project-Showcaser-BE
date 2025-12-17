@@ -14,6 +14,7 @@ import MongoStore from 'connect-mongo';
 import authRoutes from './routes/authRoutes';
 import uploadRoutes from './routes/uploadRoutes';
 import notifyRoutes from './routes/notifyRoutes';
+import adminRoutes from './routes/Admin/adminRoutes'
 import passport, { configurePassport } from './config/passport';
 import cookieParser from 'cookie-parser';
 import { jwtCookieAuth } from './middlewares/jwtCookieAuth';
@@ -104,6 +105,7 @@ app.use('/suggestion', suggestionRoutes);
 app.use('/auth', authRoutes);
 app.use('/upload', uploadRoutes);
 app.use('/notify', notifyRoutes);
+app.use('/admin',adminRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

@@ -86,3 +86,67 @@ export const getCommentsByProjectId = async (
     next(error);
   }
 };
+
+export const getAllCommentsByAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const comments = await commentsService.getAllCommentsByAdmin();
+    res.json(comments);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getCommentByAdmin = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const comment = await commentsService.getCommentByAdmin(req.params.id);
+    if (!comment) {
+      res.status(404).json({ message: "Comment not found" });
+      return;
+    }
+    res.json(comment);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const editCommentByAdmin = async (
+  req: Request<{ commentId: string }, {}, Partial<import("../models/commentModel").IComment>>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const comment = await commentsService.editCommentByAdmin(req.params.commentId, req.body);
+    if (!comment) {
+      res.status(404).json({ message: "Comment not found" });
+      return;
+    }
+    res.json(comment);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteCommentByAdmin = async (
+  req: Request<{ commentId: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const comment = await commentsService.deleteCommentByAdmin(req.params.commentId);
+    if (!comment) {
+      res.status(404).json({ message: "Comment not found" });
+      return;
+    }
+    res.json({ message: "Comment deleted successfully" });
+  } catch (error) {
+    next(error);
+  }
+};

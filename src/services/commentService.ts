@@ -21,3 +21,22 @@ export const editComment = async (id: string, content: Partial<IComment>): Promi
 export const getCommentsByProjectId = async (projectId: string): Promise<IComment[]> => {
     return await Comment.find({ projectId });
 };
+
+export const getAllCommentsByAdmin = async (): Promise<IComment[]> => {
+    return await Comment.find({});
+};
+
+export const getCommentByAdmin = async (id: string): Promise<IComment | null> => {
+    return await Comment.findById(id);
+};
+
+export const editCommentByAdmin = async (
+    commentId: string,
+    commentData: Partial<IComment>
+): Promise<IComment | null> => {
+    return await Comment.findByIdAndUpdate(commentId, commentData, { new: true });
+};
+
+export const deleteCommentByAdmin = async (commentId: string): Promise<IComment | null> => {
+    return await Comment.findByIdAndDelete(commentId);
+};

@@ -4,6 +4,73 @@ import * as projectService from "../services/projectService";
 import * as userService from "../services/userService";
 import { findDbUserFromSessionUser } from "../services/authService";
 
+
+export const getAllProjectsByAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const projects = await projectService.getAllProjectsByAdmin();
+    res.json(projects);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getProjectByAdmin = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const project = await projectService.getProjectByAdmin(req.params.id);
+    if (!project) {
+      res.status(404).json({ message: "Project not found" });
+      return;
+    }
+    res.json(project);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const editProjectByAdmin = async (
+  req: Request<{ projectId: string }, {}, IProject>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const project = await projectService.editProjectByAdmin(req.params.projectId, req.body);
+    if (!project) {
+      res.status(404).json({ message: "Project not found" });
+      return;
+    }
+    res.json(project);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteProjectByAdmin = async (
+  req: Request<{ projectId: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const project = await projectService.deleteProjectByAdmin(req.params.projectId);
+    if (!project) {
+      res.status(404).json({ message: "Project not found" });
+      return;
+    }
+    res.json({ message: "Project deleted successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
 export const getAllProjects = async (
   req: Request,
   res: Response,

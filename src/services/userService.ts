@@ -181,3 +181,22 @@ export const requestDeactivate = async (data: any) => {
   await user.save();
   return { data: "User deactivation requested successfully!", statusCode: 200 };
 };
+
+export const getAllUsersByAdmin = async (): Promise<IUser[]> => {
+  return await userModel.find({});
+};
+
+export const getUserByAdmin = async (id: string): Promise<IUser | null> => {
+  return await userModel.findById(id);
+};
+
+export const editUserByAdmin = async (
+  userId: string,
+  userData: Partial<IUser>
+): Promise<IUser | null> => {
+  return await userModel.findByIdAndUpdate(userId, userData, { new: true });
+};
+
+export const deleteUserByAdmin = async (userId: string): Promise<IUser | null> => {
+  return await userModel.findByIdAndDelete(userId);
+};
