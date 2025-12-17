@@ -82,6 +82,8 @@ export const me = async (req: Request, res: Response): Promise<void> => {
 
 export const logout = (req: Request, res: Response): void => {
   const homeUrl = process.env.FRONTEND_HOME_URL || "http://localhost:5173/";
+  const aadLogoutBase =
+    "https://login.microsoftonline.com/common/oauth2/v2.0/logout";
   
   // Check if this is an API request (Accept: application/json) or browser navigation
   const isApiRequest = req.headers.accept?.includes("application/json") || 
@@ -98,18 +100,23 @@ export const logout = (req: Request, res: Response): void => {
       });
       clearAuthCookies(res);
       
-      // If API request, return JSON with success. Otherwise redirect directly to frontend
+      // Build Microsoft logout URL with redirect back to frontend
+      // IMPORTANT: The redirect URI must be registered in Azure AD App Registration
+      // Go to: Azure Portal → App Registration → Authentication → Add redirect URI
+      const postLogout = encodeURIComponent(homeUrl);
+      const logoutUrl = `${aadLogoutBase}?post_logout_redirect_uri=${postLogout}`;
+      
+      // If API request, return JSON with logout URL. Otherwise redirect to Microsoft logout
       if (isApiRequest) {
         res.json({ 
           success: true,
-          message: "Logged out successfully",
-          redirectUrl: homeUrl
+          logoutUrl,
+          message: "Logged out successfully"
         });
       } else {
-        // Direct browser navigation - redirect directly to frontend home
-        // Note: Microsoft session will remain, but our app session is cleared
-        // If you need to clear Microsoft session too, register the redirect URI in Azure AD
-        res.redirect(homeUrl);
+        // Direct browser navigation - redirect to Microsoft logout
+        // Microsoft will then redirect back to homeUrl after logout
+        res.redirect(logoutUrl);
       }
     });
   };
