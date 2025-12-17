@@ -10,6 +10,7 @@ import courseRoutes from './routes/courseRoutes';
 import commentRoutes from './routes/commentRoutes';
 import suggestionRoutes from './routes/suggestionRoutes';
 import session from 'express-session';
+import MongoStore from 'connect-mongo';
 import authRoutes from './routes/authRoutes';
 import uploadRoutes from './routes/uploadRoutes';
 import notifyRoutes from './routes/notifyRoutes';
@@ -20,6 +21,10 @@ import { jwtCookieAuth } from './middlewares/jwtCookieAuth';
 dotenv.config();
 
 const app = express();
+
+// Heroku / reverse proxies must be trusted so secure cookies are sent correctly
+// and req.secure is set based on X-Forwarded-Proto.
+app.set('trust proxy', 1);
 
 // Configure allowed origins based on environment
 const allowedOrigins = (process.env.NODE_ENV === 'production'
@@ -57,7 +62,8 @@ app.use(cookieParser());
 
 // Session and Passport
 const sessionSecret = process.env.SESSION_SECRET || 'keyboard cat';
-app.use(session({
+
+const sessionOptions: session.SessionOptions = {
   secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
@@ -66,7 +72,21 @@ app.use(session({
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
   }
-}));
+};
+
+// Use a persistent store in production (no in-memory sessions on Heroku)
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.MONGODB_URI) {
+    throw new Error('MONGODB_URI must be set in production for session storage');
+  }
+  sessionOptions.store = MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI,
+    collectionName: 'sessions',
+    ttl: 14 * 24 * 60 * 60 // 14 days
+  });
+}
+
+app.use(session(sessionOptions));
 
 configurePassport();
 app.use(passport.initialize());

@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import jwt from "jsonwebtoken";
 import {
   findDbUserFromSessionUser,
   clearAuthCookies,
@@ -12,18 +13,50 @@ export const loginSuccess = async (
   const sessionUser = (req as any).user as
     | { sub?: string; id?: string; email?: string; firstLogin?: boolean }
     | undefined;
-  if (sessionUser) {
-    if (sessionUser?.firstLogin) {
-      const redirectUrl =
-        process.env.FRONTEND_FIRST_LOGIN_REDIRECT_URL ||
-        "http://localhost:5173/complete-profile";
-      res.redirect(redirectUrl);
-      return;
-    } else {
-      const dashboardUrl =
-        process.env.FRONTEND_DASHBOARD_URL || "http://localhost:5173/";
-      res.redirect(dashboardUrl);
+
+  if (!sessionUser) {
+    res.redirect(
+      process.env.FRONTEND_HOME_URL || "http://localhost:5173/"
+    );
+    return;
+  }
+
+  // Issue a JWT auth cookie so the frontend can authenticate via cookies
+  // without depending on cross-domain Passport sessions.
+  const dbUser = await findDbUserFromSessionUser(sessionUser);
+  if (dbUser) {
+    const tokenPayload = {
+      id: dbUser.id,
+      email: dbUser.email,
+      role: (dbUser as any).role,
+    };
+
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw new Error("JWT_SECRET must be set");
     }
+
+    const token = jwt.sign(tokenPayload, jwtSecret, {
+      expiresIn: "7d",
+    });
+
+    res.cookie("auth_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    });
+  }
+
+  if (sessionUser?.firstLogin) {
+    const redirectUrl =
+      process.env.FRONTEND_FIRST_LOGIN_REDIRECT_URL ||
+      "http://localhost:5173/complete-profile";
+    res.redirect(redirectUrl);
+    return;
+  } else {
+    const dashboardUrl =
+      process.env.FRONTEND_DASHBOARD_URL || "http://localhost:5173/";
+    res.redirect(dashboardUrl);
   }
 };
 
