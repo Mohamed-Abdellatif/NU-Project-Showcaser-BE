@@ -663,7 +663,7 @@ export const getRelatedProjects = async (
 
   const topSimilar = similarProjects.slice(0, 3).map(item => item.project);
 
-  if (topSimilar.length >= 2) {
+  if (topSimilar.length > 2) {
     return topSimilar;
   }
 
@@ -675,7 +675,7 @@ export const getRelatedProjects = async (
 
   const shuffled = remainingProjects.sort(() => 0.5 - Math.random());
 
-  while (topSimilar.length < 4 && shuffled.length > 0) {
+  while (topSimilar.length < 3 && shuffled.length > 0) {
     topSimilar.push(shuffled.pop()!);
   }
 
