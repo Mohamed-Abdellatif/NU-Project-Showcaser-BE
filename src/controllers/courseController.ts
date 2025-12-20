@@ -21,34 +21,64 @@ export const getAllCourses = async (
   next: NextFunction
 ) => {
   try {
-    const courses = await courseService.getAllCourses();
+    const filters = {
+      code: req.query.code as string,
+      title: req.query.title as string,
+    };
+    const courses = await courseService.getAllCourses(filters);
     res.status(200).json(courses);
   } catch (error) {
     next(error);
   }
 };
 
-export const getCourseByCode = async (
-  req: Request<{ code: string }>,
+export const getAllCoursesByAdmin = async (
+  req: Request,
   res: Response,
   next: NextFunction
-) => {
+): Promise<void> => {
   try {
-    const course = await courseService.getCourseByCode(req.params.code);
-    res.status(200).json(course);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    
+    const filters: courseService.CourseAdminFilters = {
+      code: req.query.code as string,
+      title: req.query.title as string,
+    };
+
+    const result = await courseService.getAllCoursesByAdmin(page, limit, filters);
+    res.json(result);
   } catch (error) {
     next(error);
   }
 };
 
-export const deleteCourseByCode = async (
-  req: Request<{ code: string }>,
+export const updateCourseByAdmin = async (
+  req: Request<{ courseId: string }, {}, ICourse>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const course = await courseService.updateCourseByAdmin(req.params.courseId, req.body);
+    if (!course) {
+      res.status(404).json({ message: "Course not found" });
+      return;
+    }
+    res.json(course);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteCourseByAdmin = async (
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    await courseService.deleteCourseByCode(req.params.code);
-    res.status(204).send();
+    const { courseId } = req.params;
+    await courseService.deleteCourseByAdmin(courseId);
+    res.status(200).json({ message: "Course deleted successfully" });
   } catch (error) {
     next(error);
   }

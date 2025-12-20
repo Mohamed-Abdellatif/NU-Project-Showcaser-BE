@@ -6,6 +6,7 @@ import userAdminRoutes from "./userAdminRoutes";
 import commentAdminRoutes from "./commentAdminRoutes";
 import suggestionAdminRoutes from "./suggestionAdminRoutes";
 import schoolAdminRoutes from "./schoolAdminRoutes";
+import courseAdminRoutes from "./courseAdminRoutes";
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use(userAdminRoutes);
 router.use(commentAdminRoutes);
 router.use(suggestionAdminRoutes);
 router.use(schoolAdminRoutes);
+router.use(courseAdminRoutes);
 
 export default router;

@@ -176,6 +176,7 @@ export type ProjectSearchCriteria = {
   supervisor?: string;
   teamMember?: string | ITeamMember | ITeamMember[];
   teamLeader?: string | ITeamMember;
+  technology?: string;
 };
 
 export const searchProjects = async (
@@ -348,6 +349,9 @@ export const getProjects = async (
   }
   if (filters?.supervisor) {
     filterQuery.supervisor = { $regex: filters.supervisor, $options: "i" };
+  }
+  if (filters?.technology) {
+    filterQuery.technologies = { $in: [new RegExp(filters.technology, "i")] };
   }
   if (filters?.teamMember) {
     if (typeof filters.teamMember === "string") {

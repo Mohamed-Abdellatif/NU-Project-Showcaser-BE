@@ -361,6 +361,7 @@ export const getProjects = async (
       teamMember?: string;
       teamMembers?: string;
       teamLeader?: string;
+      technology?: string;
     }
   >,
   res: Response,
@@ -369,7 +370,7 @@ export const getProjects = async (
   try {
     const page = parseInt(req.query.page || "1", 10);
     const limit = parseInt(req.query.limit || "10", 10);
-    const { title, major, course, supervisor, teamMember, teamMembers, teamLeader } =
+    const { title, major, course, supervisor, teamMember, teamMembers, teamLeader, technology } =
       req.query;
 
     // Support both teamMember (singular) and teamMembers (plural) for backward compatibility
@@ -417,6 +418,7 @@ export const getProjects = async (
       ...(supervisor && { supervisor }),
       ...(parsedTeamMember && { teamMember: parsedTeamMember }),
       ...(parsedTeamLeader && { teamLeader: parsedTeamLeader }),
+      ...(technology && { technology }),
     };
 
     const result = await projectService.getProjects(page, limit, filters);
