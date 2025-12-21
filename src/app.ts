@@ -18,6 +18,7 @@ import adminRoutes from './routes/Admin/adminRoutes'
 import passport, { configurePassport } from './config/passport';
 import cookieParser from 'cookie-parser';
 import { jwtCookieAuth } from './middlewares/jwtCookieAuth';
+import { originGuard } from './middlewares/originGuard';
 
 dotenv.config();
 
@@ -94,6 +95,9 @@ app.use(passport.initialize());
 app.use(passport.session());
 // Attach user from JWT cookie (if present)
 app.use(jwtCookieAuth);
+
+// Block direct browser access - only allow requests from frontend domains
+app.use(originGuard);
 
 // Use routes
 app.use('/project', projectRoutes);
