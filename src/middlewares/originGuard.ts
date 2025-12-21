@@ -4,6 +4,13 @@ import { Request, Response, NextFunction } from 'express';
  * Middleware to block direct browser access and only allow requests from allowed origins
  */
 export function originGuard(req: Request, res: Response, next: NextFunction): void {
+  // Skip origin guard for Microsoft login routes (OAuth redirects come from Microsoft servers)
+  const isMicrosoftLoginRoute = req.path === '/auth/microsoft' || req.path === '/auth/callback';
+  if (isMicrosoftLoginRoute) {
+    next();
+    return;
+  }
+
   // Get allowed origins from environment
   const allowedOrigins = (process.env.NODE_ENV === 'production'
     ? process.env.FRONTEND_URLS?.split(',') || []
