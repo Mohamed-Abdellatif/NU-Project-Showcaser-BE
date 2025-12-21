@@ -14,6 +14,7 @@ A comprehensive backend API for showcasing university student projects, built wi
 - [Technology Stack](#technology-stack)
 - [Project Structure](#project-structure)
 - [Getting Started](#getting-started)
+- [Docker Deployment](#docker-deployment)
 - [API Documentation](#api-documentation)
 - [Data Models](#data-models)
 - [Environment Variables](#environment-variables)
@@ -261,6 +262,209 @@ npm run build
 # Start the production server
 npm start
 ```
+
+## Docker Deployment
+
+This project is fully Dockerized with production-ready configurations. You can run the application using Docker or Docker Compose.
+
+### Prerequisites
+
+- **Docker** v20.10 or higher
+- **Docker Compose** v2.0 or higher (optional, for local development)
+
+### Quick Start with Docker Compose
+
+The easiest way to run the entire stack (backend + MongoDB) locally:
+
+1. **Copy environment variables template**
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Configure your `.env` file**
+   
+   Edit `.env` and fill in all required values (see [Environment Variables](#environment-variables) section).
+
+3. **Start all services**
+   ```bash
+   docker-compose up -d
+   ```
+
+4. **View logs**
+   ```bash
+   docker-compose logs -f backend
+   ```
+
+5. **Stop services**
+   ```bash
+   docker-compose down
+   ```
+
+The backend will be available at `http://localhost:3000` and MongoDB at `mongodb://localhost:27017`.
+
+### Building the Docker Image
+
+Build the production Docker image:
+
+```bash
+docker build -t nu-project-showcaser-backend .
+```
+
+This creates a multi-stage optimized image (~200-300MB) with:
+- TypeScript compiled to JavaScript
+- Only production dependencies
+- Non-root user for security
+- Health check configured
+
+### Running with Docker
+
+#### Using Environment Variables File
+
+```bash
+docker run -d \
+  --name nu-project-showcaser-backend \
+  --env-file .env \
+  -p 3000:3000 \
+  nu-project-showcaser-backend
+```
+
+#### Using Individual Environment Variables
+
+```bash
+docker run -d \
+  --name nu-project-showcaser-backend \
+  -e NODE_ENV=production \
+  -e PORT=3000 \
+  -e MONGODB_URI=mongodb://your-mongodb-uri \
+  -e JWT_SECRET=your-jwt-secret \
+  -e SESSION_SECRET=your-session-secret \
+  # ... add all other required env variables
+  -p 3000:3000 \
+  nu-project-showcaser-backend
+```
+
+#### Connecting to External MongoDB
+
+If using MongoDB Atlas or an external MongoDB instance:
+
+```bash
+docker run -d \
+  --name nu-project-showcaser-backend \
+  --env-file .env \
+  -p 3000:3000 \
+  nu-project-showcaser-backend
+```
+
+Make sure your `MONGODB_URI` in `.env` points to your external MongoDB instance.
+
+### Docker Compose Services
+
+The `docker-compose.yml` includes:
+
+- **backend**: The Node.js API service
+  - Builds from `Dockerfile`
+  - Exposes port 3000
+  - Loads environment variables from `.env`
+  - Health check enabled
+  - Auto-restarts on failure
+
+- **mongodb**: MongoDB database (local development only)
+  - Uses official MongoDB 7.0 image
+  - Data persisted in Docker volume
+  - Exposes port 27017
+  - Health check enabled
+
+### Environment Variables with Docker
+
+All environment variables must be provided at runtime. Never commit `.env` files to version control.
+
+**Required variables:**
+- `MONGODB_URI` - MongoDB connection string
+- `SESSION_SECRET` - Session encryption secret
+- `JWT_SECRET` - JWT token signing secret
+- `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_REDIRECT_URL` - Azure AD OAuth
+- `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` - Supabase storage
+- `FRONTEND_URLS` - Comma-separated frontend URLs for CORS
+- `EMAIL_USER`, `EMAIL_PASS` - Email service credentials
+
+See `.env.example` for the complete list with descriptions.
+
+### Production Deployment
+
+For production deployments:
+
+1. **Use managed MongoDB** (MongoDB Atlas, AWS DocumentDB, etc.)
+   - Update `MONGODB_URI` in your production environment
+   - Remove MongoDB service from `docker-compose.yml` if used
+
+2. **Set secure secrets**
+   - Generate strong random strings for `SESSION_SECRET` and `JWT_SECRET`
+   - Use environment variable management (Docker secrets, Kubernetes secrets, etc.)
+
+3. **Configure production URLs**
+   - Update `FRONTEND_URLS` with production frontend domain
+   - Update `AZURE_REDIRECT_URL` with production callback URL
+   - Update frontend redirect URLs
+
+4. **Use Docker orchestration**
+   - Kubernetes, Docker Swarm, or cloud container services
+   - Configure health checks and auto-restart policies
+   - Set up logging and monitoring
+
+### Docker Commands Reference
+
+```bash
+# Build image
+docker build -t nu-project-showcaser-backend .
+
+# Run container
+docker run -d --name backend --env-file .env -p 3000:3000 nu-project-showcaser-backend
+
+# View logs
+docker logs -f backend
+
+# Stop container
+docker stop backend
+
+# Remove container
+docker rm backend
+
+# Execute commands in running container
+docker exec -it backend sh
+
+# Docker Compose - Start services
+docker-compose up -d
+
+# Docker Compose - Stop services
+docker-compose down
+
+# Docker Compose - View logs
+docker-compose logs -f
+
+# Docker Compose - Rebuild after changes
+docker-compose up -d --build
+```
+
+### Troubleshooting
+
+**Container exits immediately:**
+- Check logs: `docker logs backend`
+- Verify all required environment variables are set
+- Ensure MongoDB is accessible (if using external instance)
+
+**Cannot connect to MongoDB:**
+- Verify `MONGODB_URI` is correct
+- Check network connectivity
+- For Docker Compose, ensure services are on the same network
+
+**Port already in use:**
+- Change port mapping: `-p 3001:3000`
+- Or stop the service using port 3000
+
+**Build fails:**
+- Ensure `package.json` and `package-lock.json` are present
+- Check Docker has enough resources allocated
+- Clear Docker build cache: `docker builder prune`
 
 ## API Documentation
 
@@ -892,3 +1096,5 @@ This project is licensed under the MIT License.
 ---
 
 **Built with ❤️ for the university community**
+
+[⬆ Back to top](#nu-project-showcaser---backend-api)
