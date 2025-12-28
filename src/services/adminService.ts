@@ -32,7 +32,7 @@ export const getAdminStats = async (): Promise<AdminStats> => {
     newCommentsThisWeek,
   ] = await Promise.all([
     Project.countDocuments(),
-    Project.countDocuments({ status: "pending" }),
+    Project.countDocuments({ status: "pending-ta" }),
     userModel.countDocuments(),
     userModel.countDocuments({ createdAt: { $gte: oneWeekAgo } }),
     Comment.countDocuments(),
